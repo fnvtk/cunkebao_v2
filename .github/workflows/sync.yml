@@ -28,4 +28,4 @@ jobs:
           cp -r vercel_files/* .
           git add .
           git commit -m "Sync updates from Vercel"
-          git push https://$GITHUB_TOKEN@github.com/fnvtk/cunkebao_v2.git master
+          git push https://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@github.com/fnvtk/cunkebao_v2.git master

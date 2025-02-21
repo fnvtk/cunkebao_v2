@@ -1,9 +1,9 @@
-   name: Sync Vercel Files to GitHub
+name: Sync Vercel Files to GitHub
 
 on:
   push:
     branches:
-      - master  # 你可以根据需要修改为你需要同步的分支
+      - master  # 你可以根据需要修改为你部署的分支
 
 jobs:
   sync:
@@ -20,9 +20,9 @@ jobs:
 
       - name: Commit and Push Vercel files to GitHub
         run: |
-          git config user.name "Your Name"
-          git config user.email "your-email@example.com"
+          git config user.name "fnvtk"
+          git config user.email "zhiqun@qq.com"
           cp -r vercel_files/* .
           git add .
-          git commit -m "Sync Vercel files to GitHub"
+          git commit -m "Sync updates from Vercel"
           git push origin master

@@ -1,0 +1,28 @@
+   name: Sync Vercel Files to GitHub
+
+on:
+  push:
+    branches:
+      - master  # 你可以根据需要修改为你需要同步的分支
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Download files from Vercel
+        run: |
+          curl -L -o vercel_deploy.zip https://vercel.com/fnvtks-projects/cunkebao-v2/J6YTApbZU73GiwJ9bumRdGRrMA4Q
+          unzip vercel_deploy.zip -d vercel_files
+
+      - name: Commit and Push Vercel files to GitHub
+        run: |
+          git config user.name "Your Name"
+          git config user.email "your-email@example.com"
+          cp -r vercel_files/* .
+          git add .
+          git commit -m "Sync Vercel files to GitHub"
+          git push origin master

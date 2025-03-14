@@ -2,13 +2,23 @@
 
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
-import { Bot, Users, MessageCircle, Activity, TrendingUp } from "lucide-react"
+// 在 import 部分添加 DollarSign 图标
+import { Bot, Users, MessageCircle, Activity, DollarSign } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
+// 在 workspaceFeatures 数组中添加流量定价入口，放在第一个位置
 const workspaceFeatures = [
+  {
+    id: "pricing",
+    name: "流量定价",
+    description: "定义你的流量价格",
+    icon: DollarSign,
+    color: "bg-emerald-100 text-emerald-600",
+    isNew: true,
+  },
   {
     id: "auto-like",
     name: "自动点赞",
@@ -37,13 +47,6 @@ const workspaceFeatures = [
     description: "智能均分好友建群",
     icon: Users,
     color: "bg-green-100 text-green-600",
-  },
-  {
-    id: "traffic-pricing",
-    name: "流量定价",
-    description: "设置流量价格和规则",
-    icon: TrendingUp,
-    color: "bg-cyan-100 text-cyan-600",
   },
   {
     id: "ai-assistant",

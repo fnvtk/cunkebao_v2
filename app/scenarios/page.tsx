@@ -5,7 +5,6 @@ import { TrendingUp, Users, ChevronLeft, Bot, Sparkles, Plus } from "lucide-reac
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 
 interface Channel {
   id: string
@@ -286,12 +285,11 @@ export default function ScenariosPage() {
               </Button>
               <h1 className="text-xl font-semibold text-blue-600">场景获客</h1>
             </div>
-            <Link href="/scenarios/new">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                新建计划
-              </Button>
-            </Link>
+
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/scenarios/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              新建计划
+            </Button>
           </div>
         </header>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, EyeOff, Phone } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,18 @@ import { useRouter } from "next/navigation"
 import { WeChatIcon } from "@/components/icons/wechat-icon"
 import { AppleIcon } from "@/components/icons/apple-icon"
 import { useToast } from "@/components/ui/use-toast"
+
+// 使用环境变量获取API域名
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.example.com"
+
+// 定义登录响应类型
+interface LoginResponse {
+  code: number
+  message: string
+  data?: {
+    token: string
+  }
+}
 
 interface LoginForm {
   phone: string
@@ -89,21 +101,44 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-      // 模拟登录请求
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // 创建FormData对象
+      const formData = new FormData()
+      formData.append("phone", form.phone)
 
-      // 成功后跳转
-      router.push("/profile")
+      if (activeTab === "password") {
+        formData.append("password", form.password)
+      } else {
+        formData.append("verificationCode", form.verificationCode)
+      }
 
-      toast({
-        title: "登录成功",
-        description: "欢迎回来！",
+      // 发送登录请求
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        body: formData,
+        // 不需要设置Content-Type，浏览器会自动设置为multipart/form-data并添加boundary
       })
+
+      const result: LoginResponse = await response.json()
+
+      if (result.code === 10000 && result.data?.token) {
+        // 保存token到localStorage
+        localStorage.setItem("token", result.data.token)
+
+        // 成功后跳转
+        router.push("/profile")
+
+        toast({
+          title: "登录成功",
+          description: "欢迎回来！",
+        })
+      } else {
+        throw new Error(result.message || "登录失败")
+      }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "登录失败",
-        description: "请稍后重试",
+        description: error instanceof Error ? error.message : "请稍后重试",
       })
     } finally {
       setIsLoading(false)
@@ -122,23 +157,44 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-      // 模拟发送验证码
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // 创建FormData对象
+      const formData = new FormData()
+      formData.append("phone", form.phone)
 
-      toast({
-        title: "验证码已发送",
-        description: "请查看手机短信",
+      // 发送验证码请求
+      const response = await fetch(`${API_BASE_URL}/auth/send-code`, {
+        method: "POST",
+        body: formData,
       })
+
+      const result = await response.json()
+
+      if (result.code === 10000) {
+        toast({
+          title: "验证码已发送",
+          description: "请查看手机短信",
+        })
+      } else {
+        throw new Error(result.message || "发送失败")
+      }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "发送失败",
-        description: "请稍后重试",
+        description: error instanceof Error ? error.message : "请稍后重试",
       })
     } finally {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    // 检查是否已登录
+    const token = localStorage.getItem("token")
+    if (token) {
+      router.push("/profile")
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col px-4 py-8">

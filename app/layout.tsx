@@ -5,6 +5,7 @@ import "regenerator-runtime/runtime"
 import type React from "react"
 import ErrorBoundary from "./components/ErrorBoundary"
 import { VideoTutorialButton } from "@/components/VideoTutorialButton"
+import { AuthProvider } from "@/app/components/AuthProvider"
 
 export const metadata: Metadata = {
   title: "存客宝",
@@ -18,15 +19,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh">
+    <html lang="zh-CN">
       <body className="bg-gray-100">
-        <ErrorBoundary>
-          <main className="max-w-[390px] mx-auto bg-white min-h-screen flex flex-col relative">
-            {children}
-            <BottomNav />
-            <VideoTutorialButton />
-          </main>
-        </ErrorBoundary>
+        <AuthProvider>
+          <ErrorBoundary>
+            <main className="max-w-[390px] mx-auto bg-white min-h-screen flex flex-col relative">
+              {children}
+              <BottomNav />
+              <VideoTutorialButton />
+            </main>
+          </ErrorBoundary>
+        </AuthProvider>
       </body>
     </html>
   )

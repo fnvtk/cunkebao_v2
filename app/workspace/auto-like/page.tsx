@@ -13,6 +13,7 @@ import {
   Bell,
   Info,
   HelpCircle,
+  BarChart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,6 +48,7 @@ interface TimeRange {
 export default function AutoLikePage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("general")
+  const [activeStatsTab, setActiveStatsTab] = useState("statistics")
   const [isRunning, setIsRunning] = useState(false)
   const [progress, setProgress] = useState(0)
 
@@ -207,11 +209,15 @@ export default function AutoLikePage() {
   }
 
   return (
-    <div className="flex-1 bg-gray-50 min-h-screen">
+    <div className="flex-1 bg-gray-50 min-h-screen pb-16">
       <header className="sticky top-0 z-10 bg-white border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => (window.history.length > 1 ? router.back() : router.push("/workspace"))}
+            >
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <h1 className="ml-2 text-lg font-medium">朋友圈自动点赞</h1>
@@ -241,9 +247,9 @@ export default function AutoLikePage() {
         </div>
       </header>
 
-      <div className="container mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 左侧设置面板 */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="container mx-auto p-4 flex flex-col gap-6">
+        {/* 点赞设置面板 */}
+        <div className="space-y-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xl flex items-center">
@@ -687,119 +693,125 @@ export default function AutoLikePage() {
           )}
         </div>
 
-        {/* 右侧统计面板 */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <ThumbsUp className="h-5 w-5 mr-2" />
-                点赞统计
-              </CardTitle>
-              <CardDescription>查看自动点赞功能的效果和数据分析</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-40 mb-6">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, yAxisMax]} />
-                    <RechartsTooltip />
-                    <Line type="monotone" dataKey="likes" stroke="#3b82f6" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+        {/* 统计面板 - 改为标签页形式 */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center">
+              <BarChart className="h-5 w-5 mr-2" />
+              数据分析
+            </CardTitle>
+            <CardDescription>查看自动点赞功能的效果和数据分析</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeStatsTab} onValueChange={setActiveStatsTab} className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="statistics" className="flex items-center">
+                  <ThumbsUp className="h-4 w-4 mr-1" />
+                  <span>点赞统计</span>
+                </TabsTrigger>
+                <TabsTrigger value="active-friends" className="flex items-center">
+                  <User className="h-4 w-4 mr-1" />
+                  <span>活跃好友</span>
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span>点赞日历</span>
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-600">总点赞数</p>
-                  <p className="text-2xl font-bold">{totalLikesGiven}</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-600">互动次数</p>
-                  <p className="text-2xl font-bold">{totalInteractions}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                活跃好友
-              </CardTitle>
-              <CardDescription>最近活跃且互动频繁的好友</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-64">
-                <div className="space-y-3">
-                  {userProfiles.slice(0, 8).map((user) => (
-                    <div key={user.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.substring(0, 2)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {user.region} · 最近活跃: {user.lastActive}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {Math.floor(Math.random() * 50) + 10}次互动
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xl flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                点赞日历
-              </CardTitle>
-              <CardDescription>查看每日点赞数量和效果</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {["一", "二", "三", "四", "五", "六", "日"].map((day) => (
-                  <div key={day} className="text-xs font-medium text-gray-500">
-                    {day}
+              {/* 点赞统计内容 */}
+              <TabsContent value="statistics">
+                <div className="space-y-6">
+                  <div className="h-60">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={trendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis domain={[0, yAxisMax]} />
+                        <RechartsTooltip />
+                        <Line type="monotone" dataKey="likes" stroke="#3b82f6" strokeWidth={2} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-                {Array.from({ length: 28 }).map((_, i) => {
-                  const likesCount = Math.floor(Math.random() * maxLikesPerDay)
-                  let bgColor = "bg-gray-100"
-                  if (likesCount > maxLikesPerDay * 0.7) bgColor = "bg-green-500"
-                  else if (likesCount > maxLikesPerDay * 0.4) bgColor = "bg-green-300"
-                  else if (likesCount > maxLikesPerDay * 0.1) bgColor = "bg-green-100"
 
-                  return (
-                    <div key={i} className={`aspect-square rounded-sm ${bgColor} flex items-center justify-center`}>
-                      <span className="text-xs">{i + 1}</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-blue-600">总点赞数</p>
+                      <p className="text-2xl font-bold">{totalLikesGiven}</p>
                     </div>
-                  )
-                })}
-              </div>
-              <div className="flex justify-between mt-2 text-xs text-gray-500">
-                <span>较少</span>
-                <div className="flex space-x-1">
-                  <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-100 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-300 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <p className="text-sm text-green-600">互动次数</p>
+                      <p className="text-2xl font-bold">{totalInteractions}</p>
+                    </div>
+                  </div>
                 </div>
-                <span>较多</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </TabsContent>
+
+              {/* 活跃好友内容 */}
+              <TabsContent value="active-friends">
+                <ScrollArea className="h-80">
+                  <div className="space-y-3">
+                    {userProfiles.slice(0, 12).map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md">
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{user.name.substring(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {user.region} · 最近活跃: {user.lastActive}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {Math.floor(Math.random() * 50) + 10}次互动
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              {/* 点赞日历内容 */}
+              <TabsContent value="calendar">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-7 gap-1 text-center">
+                    {["一", "二", "三", "四", "五", "六", "日"].map((day) => (
+                      <div key={day} className="text-xs font-medium text-gray-500">
+                        {day}
+                      </div>
+                    ))}
+                    {Array.from({ length: 28 }).map((_, i) => {
+                      const likesCount = Math.floor(Math.random() * maxLikesPerDay)
+                      let bgColor = "bg-gray-100"
+                      if (likesCount > maxLikesPerDay * 0.7) bgColor = "bg-green-500"
+                      else if (likesCount > maxLikesPerDay * 0.4) bgColor = "bg-green-300"
+                      else if (likesCount > maxLikesPerDay * 0.1) bgColor = "bg-green-100"
+
+                      return (
+                        <div key={i} className={`aspect-square rounded-sm ${bgColor} flex items-center justify-center`}>
+                          <span className="text-xs">{i + 1}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-gray-500">
+                    <span>较少</span>
+                    <div className="flex space-x-1">
+                      <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
+                      <div className="w-3 h-3 bg-green-100 rounded-sm"></div>
+                      <div className="w-3 h-3 bg-green-300 rounded-sm"></div>
+                      <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                    </div>
+                    <span>较多</span>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

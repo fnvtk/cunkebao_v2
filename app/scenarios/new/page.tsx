@@ -181,7 +181,7 @@ export default function NewAcquisitionPlan() {
       case 3:
         return <MessageSettings formData={formData} onChange={setFormData} onNext={handleNext} onPrev={handlePrev} />
       case 4:
-        return <TagSettings formData={formData} onChange={setFormData} onComplete={handleSave} onPrev={handlePrev} />
+        return <TagSettings formData={formData} onComplete={handleSave} onPrev={handlePrev} onChange={setFormData} />
       default:
         return null
     }
@@ -189,8 +189,10 @@ export default function NewAcquisitionPlan() {
 
   // 如果是订单导入场景，直接跳到标签设置步骤
   useEffect(() => {
+    // 只有在订单场景下，才自动开启步骤1，而不是直接跳到步骤4
     if (formData.scenario === "order" && currentStep === 1 && formData.planName) {
-      setCurrentStep(4)
+      // 保持在步骤1，不再自动跳转到步骤4
+      // 之前的逻辑是直接跳到步骤4：setCurrentStep(4)
     }
   }, [formData.scenario, currentStep, formData.planName])
 

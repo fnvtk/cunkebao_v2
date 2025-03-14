@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast"
 import { BindDouyinQRCode } from "@/components/BindDouyinQRCode"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { PlanSettingsDialog } from "@/components/acquisition/PlanSettingsDialog"
 
 // 获取渠道中文名称
 const getChannelName = (channel: string) => {
@@ -87,6 +88,9 @@ export default function ChannelPage({ params }: { params: { channel: string } })
   const [deviceStats, setDeviceStats] = useState<DeviceStats>({
     active: 5,
   })
+
+  const [isPlanSettingsOpen, setIsPlanSettingsOpen] = useState(false)
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("")
 
   const toggleTaskStatus = (taskId: string) => {
     setTasks(
@@ -166,7 +170,10 @@ export default function ChannelPage({ params }: { params: { channel: string } })
                   <Badge
                     variant={task.status === "running" ? "success" : "secondary"}
                     className="cursor-pointer hover:opacity-80"
-                    onClick={() => toggleTaskStatus(task.id)}
+                    onClick={() => {
+                      setSelectedPlanId(task.id)
+                      setIsPlanSettingsOpen(true)
+                    }}
                   >
                     {task.status === "running" ? "进行中" : "已暂停"}
                   </Badge>
@@ -280,6 +287,7 @@ export default function ChannelPage({ params }: { params: { channel: string } })
           )
         })}
       </div>
+      <PlanSettingsDialog open={isPlanSettingsOpen} onOpenChange={setIsPlanSettingsOpen} planId={selectedPlanId} />
     </div>
   )
 }

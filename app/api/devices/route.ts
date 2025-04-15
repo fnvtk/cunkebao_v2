@@ -4,7 +4,7 @@ import type {
   QueryDeviceParams,
   Device,
   ApiResponse,
-  DeviceStatus, // Ensure DeviceStatus is imported correctly
+  DeviceStatus,
   DeviceType,
 } from "@/types/device"
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const device: Device = {
       id: "generated-id",
       ...body,
-      status: DeviceStatus.OFFLINE, // Using DeviceStatus from the import
+      status: DeviceStatus.OFFLINE,
       lastOnlineTime: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const params: QueryDeviceParams = {
       keyword: searchParams.get("keyword") || undefined,
-      status: (searchParams.get("status") as DeviceStatus) || undefined, // Using DeviceStatus from the import
+      status: (searchParams.get("status") as DeviceStatus) || undefined,
       type: (searchParams.get("type") as DeviceType) || undefined,
       tags: searchParams.get("tags") ? JSON.parse(searchParams.get("tags")!) : undefined,
       dateRange: searchParams.get("dateRange") ? JSON.parse(searchParams.get("dateRange")!) : undefined,

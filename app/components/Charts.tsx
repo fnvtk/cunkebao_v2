@@ -59,3 +59,27 @@ export function BarChart() {
   )
 }
 
+export function TrendChart({ data, dataKey = "value", height = 300 }) {
+  return (
+    <div className="w-full" style={{ height: `${height}px` }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsLineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey={dataKey}
+            stroke="#3b82f6"
+            strokeWidth={2}
+            dot={{ r: 4, fill: "#3b82f6" }}
+            activeDot={{ r: 6, fill: "#3b82f6" }}
+            isAnimationActive={true}
+          />
+        </RechartsLineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+

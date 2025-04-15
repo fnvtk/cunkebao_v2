@@ -4,12 +4,41 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, RefreshCw } from "lucide-react"
+import { Search, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import type { ContentLibrary, ContentLibraryResponse, ContentLibrarySelectResponse } from "@/types/content-library"
+
+// 定义类型，避免导入错误
+interface ContentLibrary {
+  id: string
+  name: string
+  source: string
+  creator: string
+  contentCount: number
+  lastUpdated: string
+  type: string
+  status: string
+}
+
+interface ContentLibraryResponse {
+  code: number
+  message: string
+  data: {
+    libraries: ContentLibrary[]
+    total: number
+  }
+}
+
+interface ContentLibrarySelectResponse {
+  code: number
+  message: string
+  data: {
+    success: boolean
+    libraryId: string
+    name: string
+  }
+}
 
 interface ContentSelectorProps {
   formData: any
@@ -23,7 +52,6 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchContentLibraries()
@@ -32,7 +60,7 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
   const fetchContentLibraries = async () => {
     setLoading(true)
     try {
-      // 实际项目中这里应该调用API
+      // 实际项目中这里应该调用API获取所有内容库
       const response: ContentLibraryResponse = {
         code: 0,
         message: "success",
@@ -43,23 +71,53 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
               name: "微信好友广告",
               source: "微信",
               creator: "海尼",
-              contentCount: 0,
+              contentCount: 12,
               lastUpdated: "2024-02-09 12:30",
               type: "moments",
-              status: "inactive",
+              status: "active",
             },
             {
               id: "2",
               name: "开发群",
               source: "微信",
               creator: "karuo",
-              contentCount: 0,
+              contentCount: 8,
               lastUpdated: "2024-02-09 12:30",
               type: "group",
               status: "inactive",
             },
+            {
+              id: "3",
+              name: "产品更新",
+              source: "微信",
+              creator: "张三",
+              contentCount: 15,
+              lastUpdated: "2024-02-10 09:45",
+              type: "moments",
+              status: "active",
+            },
+            {
+              id: "4",
+              name: "市场活动",
+              source: "微信",
+              creator: "李四",
+              contentCount: 20,
+              lastUpdated: "2024-02-11 14:20",
+              type: "moments",
+              status: "active",
+            },
+            {
+              id: "5",
+              name: "技术交流",
+              source: "微信",
+              creator: "王五",
+              contentCount: 10,
+              lastUpdated: "2024-02-12 16:35",
+              type: "group",
+              status: "active",
+            },
           ],
-          total: 2,
+          total: 5,
         },
       }
 
@@ -81,6 +139,10 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
 
   const handleRefresh = () => {
     fetchContentLibraries()
+    toast({
+      title: "刷新成功",
+      description: "内容库列表已更新",
+    })
   }
 
   const filteredLibraries = libraries.filter((library) => {
@@ -111,7 +173,6 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
           selectedLibrary: library.id,
           contentFormat: library.type,
         })
-        setIsDialogOpen(false)
         toast({
           title: "选择成功",
           description: `已选择内容库：${library.name}`,
@@ -149,79 +210,60 @@ export function ContentSelector({ formData, onChange, onNext, onPrev }: ContentS
   return (
     <Card className="p-6">
       <div className="space-y-6">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full justify-start">
-              {formData.selectedLibrary
-                ? `已选择：${libraries.find((lib) => lib.id === formData.selectedLibrary)?.name}`
-                : "选择内容库"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>选择内容库</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="搜索内容库..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleRefresh} disabled={loading}>
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                </Button>
-              </div>
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="搜索内容库名称..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
 
-              <Tabs defaultValue="all" onValueChange={setActiveTab}>
-                <TabsList>
-                  <TabsTrigger value="all">全部</TabsTrigger>
-                  <TabsTrigger value="friends">微信好友</TabsTrigger>
-                  <TabsTrigger value="groups">聊天群</TabsTrigger>
-                </TabsList>
-              </Tabs>
+        <Tabs defaultValue="all" onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="all">全部</TabsTrigger>
+            <TabsTrigger value="friends">微信好友</TabsTrigger>
+            <TabsTrigger value="groups">聊天群</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-              <div className="space-y-2">
-                {filteredLibraries.map((library) => (
-                  <div
-                    key={library.id}
-                    className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer border transition-colors ${
-                      formData.selectedLibrary === library.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-500"
-                    }`}
-                    onClick={() => handleSelectLibrary(library)}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{library.name}</div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        <div className="flex items-center space-x-2">
-                          <span>来源：{library.source}</span>
-                          <span>•</span>
-                          <span>创建人：{library.creator}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline">内容数量：{library.contentCount}</Badge>
-                          <Badge variant="outline">更新时间：{new Date(library.lastUpdated).toLocaleString()}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className={library.status === "inactive" ? "bg-gray-100" : ""}>
-                      {library.status === "active" ? "启用" : "已停用"}
-                    </Badge>
+        <div className="space-y-2">
+          {filteredLibraries.map((library) => (
+            <div
+              key={library.id}
+              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer border transition-colors ${
+                formData.selectedLibrary === library.id
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-500"
+              }`}
+              onClick={() => handleSelectLibrary(library)}
+            >
+              <div className="flex-1">
+                <div className="font-medium">{library.name}</div>
+                <div className="text-sm text-gray-500 mt-1">
+                  <div className="flex items-center space-x-2">
+                    <span>来源：{library.source}</span>
+                    <span>•</span>
+                    <span>创建人：{library.creator}</span>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Badge variant="outline">内容数量：{library.contentCount}</Badge>
+                    <Badge variant="outline">更新时间：{new Date(library.lastUpdated).toLocaleString()}</Badge>
+                  </div>
+                </div>
               </div>
+              <Badge variant="secondary" className={library.status === "inactive" ? "bg-gray-100" : ""}>
+                {library.status === "active" ? "启用" : "已停用"}
+              </Badge>
             </div>
-          </DialogContent>
-        </Dialog>
+          ))}
+        </div>
 
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrev}>

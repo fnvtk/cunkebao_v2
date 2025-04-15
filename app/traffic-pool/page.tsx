@@ -48,8 +48,8 @@ export default function TrafficPoolPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [users, setUsers] = useState<TrafficUser[]>([])
-  const [loading, setLoading] = useState(false)
-  const [activeCategory, setActiveCategory] = useState("all")
+  const [loading, setLoading] = useState(true) // Start with loading state
+  const [activeCategory, setActiveCategory] = useState("potential") // Changed default from "all" to "potential"
   const [sourceFilter, setSourceFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -172,7 +172,7 @@ export default function TrafficPoolPage() {
             <h1 className="text-lg font-medium">流量池</h1>
           </div>
           <Button variant="outline" size="icon" onClick={() => fetchUsers()}>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </header>
@@ -209,17 +209,16 @@ export default function TrafficPoolPage() {
           </Card>
         </div>
 
-        {/* 分类标签页 */}
+        {/* 分类标签页 - 移除了"全部"选项 */}
         <Tabs
-          defaultValue="all"
+          defaultValue="potential"
           value={activeCategory}
           onValueChange={(value) => {
             setActiveCategory(value)
             setCurrentPage(1)
           }}
         >
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">全部</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="potential">潜在客户</TabsTrigger>
             <TabsTrigger value="customer">已转化</TabsTrigger>
           </TabsList>
@@ -266,12 +265,20 @@ export default function TrafficPoolPage() {
           </Select>
         </div>
 
-        {/* 用户列表 */}
+        {/* 用户列表 - 改进加载状态显示 */}
         <div className="space-y-2">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">加载中...</div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 text-blue-500 animate-spin mb-4" />
+              <div className="text-gray-500">加载中...</div>
+            </div>
           ) : users.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">暂无数据</div>
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <div className="text-gray-500">暂无数据</div>
+              <Button variant="outline" className="mt-4" onClick={fetchUsers}>
+                刷新
+              </Button>
+            </div>
           ) : (
             users.map((user) => (
               <Card

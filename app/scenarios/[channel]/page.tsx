@@ -1,17 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import { Clock, ChevronLeft, MoreVertical, Copy, Pencil, Trash2 } from "lucide-react"
-import { Card } from "@/components/ui/card"
+import { ChevronLeft, Copy, Link, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
 import { toast } from "@/components/ui/use-toast"
-import { BindDouyinQRCode } from "@/components/BindDouyinQRCode"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import Link from "next/link"
-import { PlanSettingsDialog } from "@/components/acquisition/PlanSettingsDialog"
+import { ScenarioAcquisitionCard } from "@/app/components/acquisition/ScenarioAcquisitionCard"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // 获取渠道中文名称
 const getChannelName = (channel: string) => {
@@ -20,6 +25,12 @@ const getChannelName = (channel: string) => {
     kuaishou: "快手",
     xiaohongshu: "小红书",
     weibo: "微博",
+    haibao: "海报",
+    phone: "电话",
+    gongzhonghao: "公众号",
+    weixinqun: "微信群",
+    payment: "付款码",
+    api: "API",
   }
   return channelMap[channel] || channel
 }
@@ -43,12 +54,30 @@ interface DeviceStats {
   active: number
 }
 
+// API文档提示组件
+function ApiDocumentationTooltip() {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <p className="text-xs">
+            计划接口允许您通过API将外部系统的客户数据直接导入到存客宝。支持多种编程语言和第三方平台集成。
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
 export default function ChannelPage({ params }: { params: { channel: string } }) {
   const router = useRouter()
   const channel = params.channel
   const channelName = getChannelName(params.channel)
 
-  const [tasks, setTasks] = useState<Task[]>([
+  const initialTasks = [
     {
       id: "1",
       name: `${channelName}直播获客计划`,
@@ -83,30 +112,22 @@ export default function ChannelPage({ params }: { params: { channel: string } })
         customers: Math.floor(Math.random() * 20) + 20,
       })),
     },
-  ])
+  ]
+
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
 
   const [deviceStats, setDeviceStats] = useState<DeviceStats>({
     active: 5,
   })
 
-  const [isPlanSettingsOpen, setIsPlanSettingsOpen] = useState(false)
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("")
-
-  const toggleTaskStatus = (taskId: string) => {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id === taskId) {
-          const newStatus = task.status === "running" ? "paused" : "running"
-          return { ...task, status: newStatus }
-        }
-        return task
-      }),
-    )
-  }
+  const [showApiDialog, setShowApiDialog] = useState(false)
+  const [currentApiSettings, setCurrentApiSettings] = useState({
+    apiKey: "",
+    webhookUrl: "",
+    taskId: "",
+  })
 
   const handleEditPlan = (taskId: string) => {
-    console.log(`编辑计划: ${taskId}`)
-    console.log(`跳转到: /scenarios/${channel}/edit/${taskId}`)
     router.push(`/scenarios/${channel}/edit/${taskId}`)
   }
 
@@ -123,6 +144,7 @@ export default function ChannelPage({ params }: { params: { channel: string } })
       toast({
         title: "计划已复制",
         description: `已成功复制"${taskToCopy.name}"`,
+        variant: "success",
       })
     }
   }
@@ -134,14 +156,44 @@ export default function ChannelPage({ params }: { params: { channel: string } })
       toast({
         title: "计划已删除",
         description: `已成功删除"${taskToDelete.name}"`,
+        variant: "success",
       })
     }
   }
 
-  // 计算通过率
-  const calculatePassRate = (acquired: number, added: number) => {
-    if (acquired === 0) return 0
-    return Math.round((added / acquired) * 100)
+  const handleStatusChange = (taskId: string, newStatus: "running" | "paused") => {
+    setTasks(tasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
+
+    toast({
+      title: newStatus === "running" ? "计划已启动" : "计划已暂停",
+      description: `已${newStatus === "running" ? "启动" : "暂停"}获客计划`,
+      variant: "success",
+    })
+  }
+
+  const handleOpenApiSettings = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId)
+    if (task) {
+      setCurrentApiSettings({
+        apiKey: `api_${taskId}_${Math.random().toString(36).substring(2, 10)}`,
+        webhookUrl: `${window.location.origin}/api/scenarios/${channel}/${taskId}/webhook`,
+        taskId,
+      })
+      setShowApiDialog(true)
+    }
+  }
+
+  const handleCopyApiUrl = (url: string, withParams = false) => {
+    let copyUrl = url
+    if (withParams) {
+      copyUrl = `${url}?name=张三&phone=13800138000&source=外部系统&remark=测试数据`
+    }
+    navigator.clipboard.writeText(copyUrl)
+    toast({
+      title: "已复制",
+      description: withParams ? "接口地址（含示例参数）已复制到剪贴板" : "接口地址已复制到剪贴板",
+      variant: "success",
+    })
   }
 
   return (
@@ -158,136 +210,111 @@ export default function ChannelPage({ params }: { params: { channel: string } })
       </header>
 
       <div className="p-4 max-w-7xl mx-auto">
-        {tasks.map((task) => {
-          const { devices: deviceCount, acquired: acquiredCount, added: addedCount } = task.stats
-          const passRate = calculatePassRate(acquiredCount, addedCount)
-
-          return (
-            <Card key={task.id} className="p-6 hover:shadow-lg transition-all mb-4 bg-white/80 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <h3 className="font-medium text-lg">{task.name}</h3>
-                  <Badge
-                    variant={task.status === "running" ? "success" : "secondary"}
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => {
-                      setSelectedPlanId(task.id)
-                      setIsPlanSettingsOpen(true)
-                    }}
-                  >
-                    {task.status === "running" ? "进行中" : "已暂停"}
-                  </Badge>
-                  {params.channel === "douyin" && <BindDouyinQRCode />}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 rounded-full z-10">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 z-50">
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEditPlan(task.id)
-                      }}
-                      className="cursor-pointer hover:bg-blue-50"
-                    >
-                      <Pencil className="w-4 h-4 mr-2" />
-                      编辑计划
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCopyPlan(task.id)
-                      }}
-                      className="cursor-pointer hover:bg-blue-50"
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      复制计划
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeletePlan(task.id)
-                      }}
-                      className="text-red-600 cursor-pointer hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      删除计划
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                <Link href={`/scenarios/${channel}/devices`}>
-                  <Card className="p-2 hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="text-sm text-gray-500 mb-1">设备数</div>
-                    <div className="text-2xl font-semibold">{deviceCount}</div>
-                  </Card>
-                </Link>
-
-                <Link href={`/scenarios/${channel}/acquired`}>
-                  <Card className="p-2 hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="text-sm text-gray-500 mb-1">已获客</div>
-                    <div className="text-2xl font-semibold">{acquiredCount}</div>
-                  </Card>
-                </Link>
-
-                <Link href={`/scenarios/${channel}/added`}>
-                  <Card className="p-2 hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="text-sm text-gray-500 mb-1">已添加</div>
-                    <div className="text-2xl font-semibold">{addedCount}</div>
-                  </Card>
-                </Link>
-
-                <Card className="p-2">
-                  <div className="text-sm text-gray-500 mb-1">通过率</div>
-                  <div className="text-2xl font-semibold">{passRate}%</div>
-                </Card>
-              </div>
-
-              <div className="h-48 bg-white rounded-lg p-4 mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={task.trend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="date" stroke="#666" />
-                    <YAxis stroke="#666" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "6px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="customers"
-                      name="获客数"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      dot={{ fill: "#3b82f6" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="flex items-center justify-between text-sm border-t pt-4 text-gray-500">
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4" />
-                  <span>上次执行：{task.executionTime}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4" />
-                  <span>下次执行：{task.nextExecutionTime}</span>
-                </div>
-              </div>
-            </Card>
-          )
-        })}
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <div key={task.id} className="mb-6">
+              <ScenarioAcquisitionCard
+                task={task}
+                channel={channel}
+                onEdit={() => handleEditPlan(task.id)}
+                onCopy={handleCopyPlan}
+                onDelete={handleDeletePlan}
+                onStatusChange={handleStatusChange}
+                onOpenSettings={handleOpenApiSettings}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+            <div className="text-gray-400 mb-4">暂无获客计划</div>
+          </div>
+        )}
       </div>
-      <PlanSettingsDialog open={isPlanSettingsOpen} onOpenChange={setIsPlanSettingsOpen} planId={selectedPlanId} />
+      {/* API接口设置对话框 */}
+      <Dialog open={showApiDialog} onOpenChange={setShowApiDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <DialogTitle>计划接口</DialogTitle>
+              <ApiDocumentationTooltip />
+            </div>
+            <DialogDescription>使用此接口直接导入客资到该获客计划，支持多种编程语言。</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API密钥</Label>
+              <div className="flex items-center space-x-2">
+                <Input id="api-key" value={currentApiSettings.apiKey} readOnly className="flex-1" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentApiSettings.apiKey)
+                    toast({
+                      title: "已复制",
+                      description: "API密钥已复制到剪贴板",
+                      variant: "success",
+                    })
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="webhook-url">接口地址</Label>
+                <button
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => handleCopyApiUrl(currentApiSettings.webhookUrl, true)}
+                >
+                  复制（含示例参数）
+                </button>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Input id="webhook-url" value={currentApiSettings.webhookUrl} readOnly className="flex-1" />
+                <Button variant="outline" size="icon" onClick={() => handleCopyApiUrl(currentApiSettings.webhookUrl)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500">支持GET/POST请求，必要参数：name（姓名）、phone（电话）</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>接口文档</Label>
+              <div className="flex items-center justify-between">
+                <Button
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => {
+                    window.open(`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}`, "_blank")
+                  }}
+                >
+                  <Link className="h-4 w-4" />
+                  查看详细接口文档与集成指南
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                <a
+                  href={`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}#examples`}
+                  target="_blank"
+                  className="text-blue-600 hover:underline"
+                  rel="noreferrer"
+                >
+                  查看Python、Java等多语言示例代码
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApiDialog(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

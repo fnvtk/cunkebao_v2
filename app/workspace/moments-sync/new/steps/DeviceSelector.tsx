@@ -8,7 +8,6 @@ import { Search, RefreshCw, X } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import {
   Pagination,
@@ -18,7 +17,34 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import type { Device, DeviceResponse, DeviceSelectResponse } from "@/types/device"
+
+// 定义类型，避免导入错误
+interface Device {
+  id: string
+  imei: string
+  name: string
+  status: string
+  wechatId: string
+  usedInPlans: number
+}
+
+interface DeviceResponse {
+  code: number
+  message: string
+  data: {
+    devices: Device[]
+    total: number
+  }
+}
+
+interface DeviceSelectResponse {
+  code: number
+  message: string
+  data: {
+    success: boolean
+    deviceIds: string[]
+  }
+}
 
 interface DeviceSelectorProps {
   formData: any
@@ -31,19 +57,18 @@ export function DeviceSelector({ formData, onChange, onNext, onPrev }: DeviceSel
   const [devices, setDevices] = useState<Device[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const itemsPerPage = 5
 
   useEffect(() => {
     fetchDevices()
-  }, [currentPage])
+  }, [])
 
   const fetchDevices = async () => {
     setLoading(true)
     try {
-      // 实际项目中这里应该调用API
+      // 实际项目中这里应该调用API获取所有设备
       const response: DeviceResponse = {
         code: 0,
         message: "success",
@@ -87,8 +112,7 @@ export function DeviceSelector({ formData, onChange, onNext, onPrev }: DeviceSel
   const filteredDevices = devices.filter((device) => {
     const matchesSearch =
       device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      device.imei.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      device.wechatId.toLowerCase().includes(searchQuery.toLowerCase())
+      device.imei.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || device.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -127,103 +151,87 @@ export function DeviceSelector({ formData, onChange, onNext, onPrev }: DeviceSel
   return (
     <Card className="p-6">
       <div className="space-y-4">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full justify-start">
-              {formData.selectedDevices.length > 0 ? `已选择 ${formData.selectedDevices.length} 个设备` : "选择设备"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>选择设备</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="搜索设备IMEI/备注/微信号"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="全部状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    <SelectItem value="online">在线</SelectItem>
-                    <SelectItem value="offline">离线</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="icon" onClick={handleRefresh} disabled={loading}>
-                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                </Button>
-              </div>
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="搜索设备备注或IMEI"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="全部状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="online">在线</SelectItem>
+              <SelectItem value="offline">离线</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
 
-              <div className="space-y-2">
-                {paginatedDevices.map((device) => (
-                  <Card
-                    key={device.id}
-                    className={`p-3 hover:shadow-md transition-shadow cursor-pointer ${
-                      formData.selectedDevices.includes(device.id) ? "border-blue-500 border-2" : ""
-                    }`}
-                    onClick={() => handleDeviceSelect(device.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        checked={formData.selectedDevices.includes(device.id)}
-                        onCheckedChange={() => handleDeviceSelect(device.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="font-medium truncate">{device.name}</div>
-                          <div
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              device.status === "online" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {device.status === "online" ? "在线" : "离线"}
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-500">IMEI: {device.imei}</div>
-                        <div className="text-sm text-gray-500">微信号: {device.wechatId}</div>
-                        {device.usedInPlans > 0 && (
-                          <div className="text-sm text-orange-500">已用于 {device.usedInPlans} 个计划</div>
-                        )}
-                      </div>
+        <div className="space-y-2">
+          {paginatedDevices.map((device) => (
+            <Card
+              key={device.id}
+              className={`p-3 hover:shadow-md transition-shadow cursor-pointer ${
+                formData.selectedDevices.includes(device.id) ? "border-blue-500 border-2" : ""
+              }`}
+              onClick={() => handleDeviceSelect(device.id)}
+            >
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={formData.selectedDevices.includes(device.id)}
+                  onCheckedChange={() => handleDeviceSelect(device.id)}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-medium truncate">{device.name}</div>
+                    <div
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        device.status === "online" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {device.status === "online" ? "在线" : "离线"}
                     </div>
-                  </Card>
-                ))}
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  />
-                  {Array.from({ length: Math.ceil(filteredDevices.length / itemsPerPage) }, (_, i) => i + 1).map(
-                    (page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page}>
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ),
+                  </div>
+                  <div className="text-sm text-gray-500">IMEI: {device.imei}</div>
+                  <div className="text-sm text-gray-500">微信号: {device.wechatId}</div>
+                  {device.usedInPlans > 0 && (
+                    <div className="text-sm text-orange-500">已用于 {device.usedInPlans} 个计划</div>
                   )}
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(Math.ceil(filteredDevices.length / itemsPerPage), prev + 1))
-                    }
-                    disabled={currentPage === Math.ceil(filteredDevices.length / itemsPerPage)}
-                  />
-                </PaginationContent>
-              </Pagination>
-            </div>
-          </DialogContent>
-        </Dialog>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationPrevious
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            />
+            {Array.from({ length: Math.ceil(filteredDevices.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page}>
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationNext
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(Math.ceil(filteredDevices.length / itemsPerPage), prev + 1))
+              }
+              disabled={currentPage === Math.ceil(filteredDevices.length / itemsPerPage)}
+            />
+          </PaginationContent>
+        </Pagination>
 
         <div className="mt-4">
           <h3 className="font-medium mb-2">已选设备：</h3>
@@ -238,7 +246,10 @@ export function DeviceSelector({ formData, onChange, onNext, onPrev }: DeviceSel
                       variant="ghost"
                       size="sm"
                       className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => handleDeviceSelect(deviceId)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeviceSelect(deviceId)
+                      }}
                     >
                       <X className="h-3 w-3" />
                     </Button>

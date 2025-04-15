@@ -72,11 +72,14 @@ export default function ProfilePage() {
         <Card className="divide-y">
           {menuItems.map((item) => (
             <div
-              key={item.href}
+              key={item.href || item.label}
               className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
-              onClick={() => router.push(item.href)}
+              onClick={() => (item.href ? router.push(item.href) : null)}
             >
-              <span>{item.label}</span>
+              <div className="flex items-center">
+                {item.icon && <span className="mr-2">{item.icon}</span>}
+                <span>{item.label}</span>
+              </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </div>
           ))}

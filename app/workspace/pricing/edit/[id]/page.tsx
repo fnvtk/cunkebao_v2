@@ -1,109 +1,159 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft } from "lucide-react"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/app/lib/utils"
+import { ChevronLeft, Users, Smartphone, Settings } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Card } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
+import { DeviceSelectionDialog } from "@/app/components/device-selection-dialog"
+import { TrafficPoolSelector } from "@/app/components/traffic-pool-selector"
 
-// 模拟标签数据
-const tagOptions = [
-  { value: "new_user", label: "新用户" },
-  { value: "low_activity", label: "低活跃度" },
-  { value: "high_spending", label: "高消费" },
-  { value: "high_activity", label: "高活跃度" },
-  { value: "potential", label: "潜在客户" },
-  { value: "purchase_intent", label: "有购买意向" },
-  { value: "holiday_consumer", label: "节日消费" },
-  { value: "promotion_sensitive", label: "促销敏感" },
-  { value: "tech_savvy", label: "科技爱好者" },
-  { value: "luxury_buyer", label: "奢侈品买家" },
-  { value: "price_sensitive", label: "价格敏感" },
-  { value: "brand_loyal", label: "品牌忠诚" },
-]
+interface UserTag {
+  id: string
+  name: string
+  color: string
+}
 
-// 模拟区域数据
-const regionOptions = [
-  { value: "nationwide", label: "全国" },
-  { value: "beijing", label: "北京" },
-  { value: "shanghai", label: "上海" },
-  { value: "guangzhou", label: "广州" },
-  { value: "shenzhen", label: "深圳" },
-  { value: "hangzhou", label: "杭州" },
-  { value: "chengdu", label: "成都" },
-  { value: "wuhan", label: "武汉" },
-  { value: "east_china", label: "华东地区" },
-  { value: "south_china", label: "华南地区" },
-  { value: "north_china", label: "华北地区" },
-  { value: "central_china", label: "华中地区" },
-  { value: "tier_1", label: "一线城市" },
-  { value: "tier_2", label: "二线城市" },
-  { value: "tier_3", label: "三线城市" },
-]
+interface TrafficUser {
+  id: string
+  avatar: string
+  nickname: string
+  wechatId: string
+  phone: string
+  region: string
+  note: string
+  status: "pending" | "added" | "failed"
+  addTime: string
+  source: string
+  assignedTo: string
+  category: "potential" | "customer" | "lost"
+  tags: UserTag[]
+}
 
-// 模拟定价数据
-const mockPricingData = [
+type DeviceSelectionType = "all" | "new" | "specific"
+
+// 模拟规则数据
+const mockRuleData = [
   {
     id: "1",
-    name: "普通流量包",
-    price: 0.5,
-    tags: ["new_user", "low_activity"],
-    regions: ["nationwide"],
+    name: "新用户流量分发",
+    selectedUsers: [
+      {
+        id: "user-1",
+        avatar: "/placeholder.svg?height=40&width=40",
+        nickname: "用户1",
+        wechatId: "wxid_abc123",
+        phone: "13800138000",
+        region: "北京",
+        note: "",
+        status: "added" as const,
+        addTime: "2023-05-15T08:30:00.000Z",
+        source: "抖音直播",
+        assignedTo: "销售1",
+        category: "potential" as const,
+        tags: [
+          { id: "tag1", name: "潜在客户", color: "bg-blue-100 text-blue-800" },
+          { id: "tag4", name: "需跟进", color: "bg-yellow-100 text-yellow-800" },
+        ],
+      },
+      {
+        id: "user-2",
+        avatar: "/placeholder.svg?height=40&width=40",
+        nickname: "用户2",
+        wechatId: "wxid_def456",
+        phone: "13900139000",
+        region: "上海",
+        note: "这是用户2的备注",
+        status: "pending" as const,
+        addTime: "2023-05-16T10:15:00.000Z",
+        source: "小红书",
+        assignedTo: "销售2",
+        category: "potential" as const,
+        tags: [{ id: "tag1", name: "潜在客户", color: "bg-blue-100 text-blue-800" }],
+      },
+    ],
+    deviceSelectionType: "all",
+    selectedDevices: [],
+    priority: "high",
+    createAsPackage: false,
+    price: "",
+    autoDistribute: true,
   },
   {
     id: "2",
-    name: "高质量流量",
-    price: 2.5,
-    tags: ["high_spending", "high_activity"],
-    regions: ["tier_1"],
-  },
-  {
-    id: "3",
-    name: "精准营销流量",
-    price: 3.8,
-    tags: ["potential", "purchase_intent"],
-    regions: ["east_china"],
-  },
-  {
-    id: "4",
-    name: "节日促销流量",
-    price: 1.5,
-    tags: ["holiday_consumer", "promotion_sensitive"],
-    regions: ["nationwide"],
+    name: "高端用户流量包",
+    selectedUsers: [
+      {
+        id: "user-3",
+        avatar: "/placeholder.svg?height=40&width=40",
+        nickname: "用户3",
+        wechatId: "wxid_ghi789",
+        phone: "13700137000",
+        region: "广州",
+        note: "",
+        status: "added" as const,
+        addTime: "2023-05-14T14:20:00.000Z",
+        source: "微信朋友圈",
+        assignedTo: "销售3",
+        category: "customer" as const,
+        tags: [
+          { id: "tag2", name: "高意向", color: "bg-green-100 text-green-800" },
+          { id: "tag7", name: "企业客户", color: "bg-red-100 text-red-800" },
+        ],
+      },
+    ],
+    deviceSelectionType: "specific",
+    selectedDevices: ["device-1", "device-4", "device-5"],
+    priority: "low",
+    createAsPackage: true,
+    price: "2.5",
+    autoDistribute: false,
   },
 ]
 
-export default function EditPricingPage({ params }: { params: { id: string } }) {
+export default function EditRulePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { id } = params
 
+  const [currentStep, setCurrentStep] = useState(1)
   const [name, setName] = useState("")
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([])
+
+  // 流量池相关状态
+  const [selectedUsers, setSelectedUsers] = useState<TrafficUser[]>([])
+  const [trafficPoolDialogOpen, setTrafficPoolDialogOpen] = useState(false)
+
+  // 设备选择相关状态
+  const [deviceSelectionType, setDeviceSelectionType] = useState<DeviceSelectionType>("all")
+  const [selectedDevices, setSelectedDevices] = useState<string[]>([])
+  const [deviceDialogOpen, setDeviceDialogOpen] = useState(false)
+
+  // 规则设定相关状态
+  const [priority, setPriority] = useState("high")
+  const [createAsPackage, setCreateAsPackage] = useState(false)
   const [price, setPrice] = useState("")
-  const [tagsOpen, setTagsOpen] = useState(false)
-  const [regionsOpen, setRegionsOpen] = useState(false)
+  const [autoDistribute, setAutoDistribute] = useState(true)
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // 在实际应用中，这里会从API获取数据
     // 这里使用模拟数据
-    const pricingItem = mockPricingData.find((item) => item.id === id)
+    const ruleItem = mockRuleData.find((item) => item.id === id)
 
-    if (pricingItem) {
-      setName(pricingItem.name)
-      setSelectedTags(pricingItem.tags)
-      setSelectedRegions(pricingItem.regions)
-      setPrice(pricingItem.price.toString())
+    if (ruleItem) {
+      setName(ruleItem.name)
+      setSelectedUsers(ruleItem.selectedUsers)
+      setDeviceSelectionType(ruleItem.deviceSelectionType as DeviceSelectionType)
+      setSelectedDevices(ruleItem.selectedDevices)
+      setPriority(ruleItem.priority)
+      setCreateAsPackage(ruleItem.createAsPackage)
+      setPrice(ruleItem.price)
+      setAutoDistribute(ruleItem.autoDistribute)
     } else {
       // 如果找不到数据，返回列表页
       router.push("/workspace/pricing")
@@ -112,16 +162,50 @@ export default function EditPricingPage({ params }: { params: { id: string } }) 
     setLoading(false)
   }, [id, router])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleDeviceSelect = (deviceIds: string[]) => {
+    setSelectedDevices(deviceIds)
+  }
 
+  const handleUserSelect = (users: TrafficUser[]) => {
+    setSelectedUsers(users)
+  }
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      if (name.trim() && selectedUsers.length > 0) {
+        setCurrentStep(2)
+      } else {
+        alert("请填写任务名称并选择流量池")
+      }
+    } else if (currentStep === 2) {
+      if (deviceSelectionType === "specific" && selectedDevices.length === 0) {
+        alert("请选择至少一个设备")
+      } else {
+        setCurrentStep(3)
+      }
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1)
+    } else if (currentStep === 3) {
+      setCurrentStep(2)
+    }
+  }
+
+  const handleSubmit = () => {
     // 在实际应用中，这里会发送API请求更新数据
     console.log({
       id,
       name,
-      tags: selectedTags,
-      regions: selectedRegions,
-      price: Number.parseFloat(price),
+      selectedUsers: selectedUsers.map((user) => user.id),
+      deviceSelectionType,
+      selectedDevices: deviceSelectionType === "specific" ? selectedDevices : [],
+      priority,
+      createAsPackage,
+      price: createAsPackage ? price : "",
+      autoDistribute,
     })
 
     // 返回到列表页
@@ -144,195 +228,305 @@ export default function EditPricingPage({ params }: { params: { id: string } }) 
           <Button variant="ghost" size="icon" onClick={() => router.push("/workspace/pricing")} className="mr-2">
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-medium">编辑定价</h1>
+          <h1 className="text-lg font-medium">编辑规则</h1>
           <div className="w-10"></div> {/* 占位，保持标题居中 */}
         </div>
       </header>
 
+      {/* 进度条 */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center">
+            <div className="flex-1">
+              <div className="flex items-center">
+                <div
+                  className={`rounded-full h-10 w-10 flex items-center justify-center ${
+                    currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  <Users className="h-5 w-5" />
+                </div>
+                <div className={`h-1 flex-1 mx-2 ${currentStep >= 2 ? "bg-blue-600" : "bg-gray-200"}`}></div>
+                <div
+                  className={`rounded-full h-10 w-10 flex items-center justify-center ${
+                    currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  <Smartphone className="h-5 w-5" />
+                </div>
+                <div className={`h-1 flex-1 mx-2 ${currentStep >= 3 ? "bg-blue-600" : "bg-gray-200"}`}></div>
+                <div
+                  className={`rounded-full h-10 w-10 flex items-center justify-center ${
+                    currentStep >= 3 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  <Settings className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex mt-2">
+            <div className="flex-1 text-center text-sm font-medium">选择流量池</div>
+            <div className="flex-1 text-center text-sm font-medium">选择设备</div>
+            <div className="flex-1 text-center text-sm font-medium">规则设定</div>
+          </div>
+        </div>
+      </div>
+
       {/* 主内容区 */}
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 定价名称 */}
-          <div className="space-y-2">
-            <Label htmlFor="name">定价名称</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="请输入定价名称"
-              required
-            />
-          </div>
-
-          {/* 流量标签选择 */}
-          <div className="space-y-2">
-            <Label>流量标签</Label>
-            <Popover open={tagsOpen} onOpenChange={setTagsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={tagsOpen}
-                  className="w-full justify-between h-auto min-h-10"
-                >
-                  {selectedTags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 py-1">
-                      {selectedTags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="mr-1">
-                          {tagOptions.find((t) => t.value === tag)?.label}
-                          <button
-                            className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            onMouseDown={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setSelectedTags(selectedTags.filter((t) => t !== tag))
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">选择流量标签</span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput placeholder="搜索标签..." />
-                  <CommandList>
-                    <CommandEmpty>未找到相关标签</CommandEmpty>
-                    <CommandGroup>
-                      <ScrollArea className="h-60">
-                        {tagOptions.map((tag) => (
-                          <CommandItem
-                            key={tag.value}
-                            value={tag.value}
-                            onSelect={() => {
-                              setSelectedTags(
-                                selectedTags.includes(tag.value)
-                                  ? selectedTags.filter((t) => t !== tag.value)
-                                  : [...selectedTags, tag.value],
-                              )
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedTags.includes(tag.value) ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            {tag.label}
-                          </CommandItem>
-                        ))}
-                      </ScrollArea>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* 流量区域选择 */}
-          <div className="space-y-2">
-            <Label>流量区域</Label>
-            <Popover open={regionsOpen} onOpenChange={setRegionsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={regionsOpen}
-                  className="w-full justify-between h-auto min-h-10"
-                >
-                  {selectedRegions.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 py-1">
-                      {selectedRegions.map((region) => (
-                        <Badge key={region} variant="outline" className="mr-1 bg-amber-50">
-                          {regionOptions.find((r) => r.value === region)?.label}
-                          <button
-                            className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            onMouseDown={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setSelectedRegions(selectedRegions.filter((r) => r !== region))
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">选择流量区域</span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0">
-                <Command>
-                  <CommandInput placeholder="搜索区域..." />
-                  <CommandList>
-                    <CommandEmpty>未找到相关区域</CommandEmpty>
-                    <CommandGroup>
-                      <ScrollArea className="h-60">
-                        {regionOptions.map((region) => (
-                          <CommandItem
-                            key={region.value}
-                            value={region.value}
-                            onSelect={() => {
-                              setSelectedRegions(
-                                selectedRegions.includes(region.value)
-                                  ? selectedRegions.filter((r) => r !== region.value)
-                                  : [...selectedRegions, region.value],
-                              )
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedRegions.includes(region.value) ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                            {region.label}
-                          </CommandItem>
-                        ))}
-                      </ScrollArea>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* 价格输入 */}
-          <div className="space-y-2">
-            <Label htmlFor="price">价格（元/人次）</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2">¥</span>
+        {currentStep === 1 ? (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name">任务名称</Label>
               <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                className="pl-8"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="请输入任务名称"
                 required
               />
             </div>
-          </div>
 
-          {/* 按钮组 */}
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => router.push("/workspace/pricing")}>
-              取消
-            </Button>
-            <Button type="submit">确认</Button>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">选择流量池</h2>
+                <Button variant="outline" onClick={() => setTrafficPoolDialogOpen(true)}>
+                  {selectedUsers.length > 0 ? "修改选择" : "选择流量池"}
+                </Button>
+              </div>
+
+              {selectedUsers.length > 0 ? (
+                <Card className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">已选择的流量池</h3>
+                    <Badge>{selectedUsers.length} 个用户</Badge>
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* 显示选中用户的标签统计 */}
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from(
+                        new Set(selectedUsers.flatMap((user) => user.tags.map((tag) => JSON.stringify(tag)))),
+                      ).map((tagJson) => {
+                        const tag = JSON.parse(tagJson) as UserTag
+                        const count = selectedUsers.filter((user) => user.tags.some((t) => t.id === tag.id)).length
+
+                        return (
+                          <Badge key={tag.id} className={tag.color}>
+                            {tag.name} ({count})
+                          </Badge>
+                        )
+                      })}
+                    </div>
+
+                    {/* 显示选中用户的来源统计 */}
+                    <div className="mt-3">
+                      <div className="text-sm font-medium mb-1">来源分布</div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from(new Set(selectedUsers.map((user) => user.source))).map((source) => {
+                          const count = selectedUsers.filter((user) => user.source === source).length
+
+                          return (
+                            <Badge key={source} variant="outline">
+                              {source} ({count})
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="p-8 flex flex-col items-center justify-center text-center text-gray-500">
+                  <Users className="h-12 w-12 mb-4 text-gray-400" />
+                  <p>请选择流量池用户</p>
+                  <p className="text-sm mt-1">您可以从流量池中选择特定标签的用户</p>
+                </Card>
+              )}
+
+              <TrafficPoolSelector
+                open={trafficPoolDialogOpen}
+                onOpenChange={setTrafficPoolDialogOpen}
+                selectedUsers={selectedUsers}
+                onSelect={handleUserSelect}
+              />
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button type="button" onClick={handleNext} disabled={name.trim() === "" || selectedUsers.length === 0}>
+                下一步
+              </Button>
+            </div>
           </div>
-        </form>
+        ) : currentStep === 2 ? (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-medium">设备选择</h2>
+
+              <RadioGroup
+                value={deviceSelectionType}
+                onValueChange={(value) => setDeviceSelectionType(value as DeviceSelectionType)}
+                className="space-y-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="all" id="all-devices" />
+                  <Label htmlFor="all-devices" className="cursor-pointer">
+                    所有设备
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="new" id="new-devices" />
+                  <Label htmlFor="new-devices" className="cursor-pointer">
+                    新添加设备
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="specific" id="specific-devices" />
+                  <Label htmlFor="specific-devices" className="cursor-pointer">
+                    指定设备
+                  </Label>
+                </div>
+              </RadioGroup>
+
+              {deviceSelectionType === "specific" && (
+                <div className="mt-4">
+                  <Button variant="outline" onClick={() => setDeviceDialogOpen(true)} className="w-full">
+                    {selectedDevices.length > 0 ? `已选择 ${selectedDevices.length} 个设备` : "选择设备"}
+                  </Button>
+
+                  {selectedDevices.length > 0 && (
+                    <Card className="mt-4 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium">已选择的设备</h3>
+                        <Badge>{selectedDevices.length} 个设备</Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        您已选择 {selectedDevices.length} 个设备用于流量分发。 点击上方按钮可以修改选择。
+                      </p>
+                    </Card>
+                  )}
+
+                  <DeviceSelectionDialog
+                    open={deviceDialogOpen}
+                    onOpenChange={setDeviceDialogOpen}
+                    selectedDevices={selectedDevices}
+                    onSelect={handleDeviceSelect}
+                  />
+                </div>
+              )}
+
+              {deviceSelectionType === "all" && (
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <p className="text-sm text-blue-700">
+                    您选择了使用所有可用设备进行流量分发。系统将自动分配流量到所有在线设备。
+                  </p>
+                </Card>
+              )}
+
+              {deviceSelectionType === "new" && (
+                <Card className="p-4 bg-green-50 border-green-200">
+                  <p className="text-sm text-green-700">
+                    您选择了使用新添加的设备进行流量分发。系统将自动将流量分配到新接入的设备。
+                  </p>
+                </Card>
+              )}
+            </div>
+
+            {/* 按钮组 */}
+            <div className="flex justify-between pt-4">
+              <Button type="button" variant="outline" onClick={handlePrevious}>
+                上一步
+              </Button>
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={deviceSelectionType === "specific" && selectedDevices.length === 0}
+              >
+                下一步
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-medium mb-4">规则设定</h2>
+
+              {/* 优先级选择 */}
+              <div className="space-y-4 mb-6">
+                <h3 className="font-medium">优先级</h3>
+                <RadioGroup value={priority} onValueChange={setPriority} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="high" id="high-priority" />
+                    <Label htmlFor="high-priority" className="cursor-pointer">
+                      高优先
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="low" id="low-priority" />
+                    <Label htmlFor="low-priority" className="cursor-pointer">
+                      低优先
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                <Card className="p-3 bg-gray-50 border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    高优先级规则将优先于低优先级规则执行。当多个规则匹配同一流量时，系统将按优先级顺序分配。
+                  </p>
+                </Card>
+              </div>
+
+              {/* 自动分发设置 */}
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="auto-distribute">自动分发</Label>
+                  <Switch id="auto-distribute" checked={autoDistribute} onCheckedChange={setAutoDistribute} />
+                </div>
+                <p className="text-sm text-gray-500">开启后，系统将自动按照规则分发流量。关闭后，需要手动触发分发。</p>
+              </div>
+
+              {/* 创建为流量包 */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="create-package">创建为流量包</Label>
+                  <Switch id="create-package" checked={createAsPackage} onCheckedChange={setCreateAsPackage} />
+                </div>
+                <p className="text-sm text-gray-500">开启后，将创建为可售卖的流量包，可设置价格。</p>
+
+                {createAsPackage && (
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="price">价格（元/流量包）</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2">¥</span>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        placeholder="0.00"
+                        className="pl-8"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 按钮组 */}
+            <div className="flex justify-between pt-4">
+              <Button type="button" variant="outline" onClick={handlePrevious}>
+                上一步
+              </Button>
+              <Button type="button" onClick={handleSubmit} disabled={createAsPackage && !price}>
+                确认
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

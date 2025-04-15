@@ -15,6 +15,7 @@ const mockPricingData = [
     price: 0.5,
     tags: ["新用户", "低活跃度"],
     region: "全国",
+    deviceAddQuantity: 10,
   },
   {
     id: "2",
@@ -22,6 +23,7 @@ const mockPricingData = [
     price: 2.5,
     tags: ["高消费", "高活跃度"],
     region: "一线城市",
+    deviceAddQuantity: 25,
   },
   {
     id: "3",
@@ -29,6 +31,7 @@ const mockPricingData = [
     price: 3.8,
     tags: ["潜在客户", "有购买意向"],
     region: "华东地区",
+    deviceAddQuantity: 50,
   },
   {
     id: "4",
@@ -36,6 +39,7 @@ const mockPricingData = [
     price: 1.5,
     tags: ["节日消费", "促销敏感"],
     region: "全国",
+    deviceAddQuantity: 15,
   },
 ]
 
@@ -56,11 +60,11 @@ export default function PricingPage() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
 
-          <h1 className="text-lg font-medium">流量定价</h1>
+          <h1 className="text-lg font-medium">流量分发</h1>
 
           <Button className="flex items-center gap-1" onClick={() => router.push("/workspace/pricing/new")}>
             <Plus className="h-4 w-4" />
-            <span>新建定价</span>
+            <span>新建分发</span>
           </Button>
         </div>
       </header>
@@ -70,7 +74,7 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 gap-4">
           {pricingItems.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">暂无定价数据，请点击右上角新建定价</p>
+              <p className="text-gray-500">暂无分发规则，请点击右上角新建分发</p>
             </div>
           ) : (
             pricingItems.map((item) => (
@@ -80,8 +84,9 @@ export default function PricingPage() {
                     <h3 className="font-medium text-lg">{item.name}</h3>
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-bold text-emerald-600">¥{item.price.toFixed(2)}</span>
-                      <span className="text-gray-500 text-sm">/ 人次</span>
+                      <span className="text-gray-500 text-sm">/ 流量包</span>
                     </div>
+                    <div className="text-sm text-gray-500 mt-1">总添加人数: {item.deviceAddQuantity} 人</div>
                     <div className="flex flex-wrap gap-2 items-center mt-2">
                       {item.tags.map((tag, index) => (
                         <Badge key={index} variant="outline" className="bg-blue-50">

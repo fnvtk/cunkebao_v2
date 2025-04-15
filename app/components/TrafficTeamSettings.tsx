@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,12 +16,13 @@ interface TrafficTeam {
 }
 
 interface TrafficTeamSettingsProps {
-  formData: any
+  formData?: any
   onChange: (data: any) => void
 }
 
-export function TrafficTeamSettings({ formData, onChange }: TrafficTeamSettingsProps) {
-  const [teams, setTeams] = useState<TrafficTeam[]>(formData.trafficTeams || [])
+export function TrafficTeamSettings({ formData = {}, onChange }: TrafficTeamSettingsProps) {
+  // Initialize teams with an empty array if formData.trafficTeams is undefined
+  const [teams, setTeams] = useState<TrafficTeam[]>([])
   const [isAddTeamOpen, setIsAddTeamOpen] = useState(false)
   const [editingTeam, setEditingTeam] = useState<TrafficTeam | null>(null)
   const [newTeam, setNewTeam] = useState<Partial<TrafficTeam>>({
@@ -29,26 +30,48 @@ export function TrafficTeamSettings({ formData, onChange }: TrafficTeamSettingsP
     commission: 0,
   })
 
+  // Initialize teams state safely
+  useEffect(() => {
+    if (formData && Array.isArray(formData.trafficTeams)) {
+      setTeams(formData.trafficTeams)
+    } else {
+      // If formData.trafficTeams is undefined or not an array, initialize with empty array
+      // Also update the parent formData to include the empty trafficTeams array
+      setTeams([])
+      onChange({ ...formData, trafficTeams: [] })
+    }
+  }, [formData])
+
   const handleAddTeam = () => {
     if (!newTeam.name) return
 
+    const updatedTeams = [...teams]
+
     if (editingTeam) {
-      setTeams(teams.map((team) => (team.id === editingTeam.id ? { ...team, ...newTeam } : team)))
+      const index = updatedTeams.findIndex((team) => team.id === editingTeam.id)
+      if (index !== -1) {
+        updatedTeams[index] = {
+          ...updatedTeams[index],
+          name: newTeam.name || updatedTeams[index].name,
+          commission: newTeam.commission !== undefined ? newTeam.commission : updatedTeams[index].commission,
+        }
+      }
     } else {
-      setTeams([
-        ...teams,
-        {
-          id: Date.now().toString(),
-          name: newTeam.name,
-          commission: newTeam.commission || 0,
-        },
-      ])
+      updatedTeams.push({
+        id: Date.now().toString(),
+        name: newTeam.name,
+        commission: newTeam.commission || 0,
+      })
     }
 
+    setTeams(updatedTeams)
     setIsAddTeamOpen(false)
     setNewTeam({ name: "", commission: 0 })
     setEditingTeam(null)
-    onChange({ ...formData, trafficTeams: teams })
+
+    // Ensure we're creating a new object for formData to trigger proper updates
+    const updatedFormData = { ...(formData || {}), trafficTeams: updatedTeams }
+    onChange(updatedFormData)
   }
 
   const handleEditTeam = (team: TrafficTeam) => {
@@ -58,8 +81,12 @@ export function TrafficTeamSettings({ formData, onChange }: TrafficTeamSettingsP
   }
 
   const handleDeleteTeam = (teamId: string) => {
-    setTeams(teams.filter((team) => team.id !== teamId))
-    onChange({ ...formData, trafficTeams: teams.filter((team) => team.id !== teamId) })
+    const updatedTeams = teams.filter((team) => team.id !== teamId)
+    setTeams(updatedTeams)
+
+    // Ensure we're creating a new object for formData to trigger proper updates
+    const updatedFormData = { ...(formData || {}), trafficTeams: updatedTeams }
+    onChange(updatedFormData)
   }
 
   return (

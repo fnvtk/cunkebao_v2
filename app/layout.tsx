@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import BottomNav from "./components/BottomNav"
 import "regenerator-runtime/runtime"
 import type React from "react"
 import ErrorBoundary from "./components/ErrorBoundary"
-import { VideoTutorialButton } from "@/components/VideoTutorialButton"
 import { AuthProvider } from "@/app/components/AuthProvider"
+import LayoutWrapper from "./components/LayoutWrapper"
 
 export const metadata: Metadata = {
   title: "存客宝",
@@ -23,11 +22,7 @@ export default function RootLayout({
       <body className="bg-gray-100">
         <AuthProvider>
           <ErrorBoundary>
-            <main className="max-w-[390px] mx-auto bg-white min-h-screen flex flex-col relative">
-              {children}
-              <BottomNav />
-              <VideoTutorialButton />
-            </main>
+            <LayoutWrapper>{children}</LayoutWrapper>
           </ErrorBoundary>
         </AuthProvider>
       </body>

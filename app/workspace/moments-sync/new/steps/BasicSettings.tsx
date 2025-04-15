@@ -57,6 +57,7 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
               variant="outline"
               size="icon"
               onClick={() => onChange({ ...formData, syncCount: Math.max(1, formData.syncCount - 1) })}
+              aria-label="减少同步数量"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -65,6 +66,7 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
               variant="outline"
               size="icon"
               onClick={() => onChange({ ...formData, syncCount: formData.syncCount + 1 })}
+              aria-label="增加同步数量"
             >
               <Plus className="h-4 w-4" />
             </Button>

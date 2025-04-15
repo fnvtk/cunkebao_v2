@@ -121,15 +121,14 @@ export default function ScenarioDevicesPage({ params }: { params: { channel: str
 
   return (
     <div className="flex-1 bg-gray-50 min-h-screen">
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="flex items-center justify-between p-4">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
+        <div className="flex items-center p-4">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-medium">{channelName}获客计划设备</h1>
+            <h1 className="text-xl font-semibold text-blue-600">{channelName}设备</h1>
           </div>
-          <Button onClick={handleSave}>保存</Button>
         </div>
       </header>
 
@@ -251,6 +250,15 @@ export default function ScenarioDevicesPage({ params }: { params: { channel: str
             )}
           </div>
         </Card>
+
+        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t flex justify-end space-x-2">
+          <Button variant="outline" onClick={() => router.back()}>
+            取消
+          </Button>
+          <Button onClick={handleSave} disabled={selectedDevices.length === 0}>
+            保存 ({selectedDevices.length})
+          </Button>
+        </div>
       </div>
     </div>
   )

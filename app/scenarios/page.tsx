@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { TrendingUp, Users, ChevronLeft, Bot, Sparkles, Plus } from "lucide-react"
+import { TrendingUp, Users, ChevronLeft, Bot, Sparkles, Plus, Phone } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -26,7 +26,45 @@ interface Plan {
   acquisitionCount: number
 }
 
+// 调整场景顺序，确保API获客在最后
 const channels: Channel[] = [
+  {
+    id: "haibao",
+    name: "海报获客",
+    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-x92XJgXy4MI7moNYlA1EAes2FqDxMH.png",
+    stats: {
+      daily: 167,
+      growth: 10.2,
+    },
+    link: "/scenarios/haibao",
+    plans: [
+      {
+        id: "plan-5",
+        name: "产品海报获客",
+        isNew: true,
+        status: "active",
+        acquisitionCount: 45,
+      },
+    ],
+  },
+  {
+    id: "order",
+    name: "订单获客",
+    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-203hwGO5hn7hTByGiJltmtACbQF4yl.png",
+    stats: {
+      daily: 112,
+      growth: 7.8,
+    },
+    link: "/scenarios/order",
+    plans: [
+      {
+        id: "plan-9",
+        name: "电商订单获客",
+        status: "active",
+        acquisitionCount: 42,
+      },
+    ],
+  },
   {
     id: "douyin",
     name: "抖音获客",
@@ -72,6 +110,25 @@ const channels: Channel[] = [
     ],
   },
   {
+    id: "phone",
+    name: "电话获客",
+    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/phone-icon-Hs9Ck3Ij7aqCOoY5NkhxQnXBnT5LGU.png",
+    stats: {
+      daily: 42,
+      growth: 15.8,
+    },
+    link: "/scenarios/phone",
+    plans: [
+      {
+        id: "phone-1",
+        name: "招商电话获客",
+        isNew: true,
+        status: "active",
+        acquisitionCount: 28,
+      },
+    ],
+  },
+  {
     id: "gongzhonghao",
     name: "公众号获客",
     icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Gsg0CMf5tsZb41mioszdjqU1WmsRxW.png",
@@ -86,25 +143,6 @@ const channels: Channel[] = [
         name: "公众号文章获客",
         status: "active",
         acquisitionCount: 87,
-      },
-    ],
-  },
-  {
-    id: "haibao",
-    name: "海报获客",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-x92XJgXy4MI7moNYlA1EAes2FqDxMH.png",
-    stats: {
-      daily: 167,
-      growth: 10.2,
-    },
-    link: "/scenarios/haibao",
-    plans: [
-      {
-        id: "plan-5",
-        name: "产品海报获客",
-        isNew: true,
-        status: "active",
-        acquisitionCount: 45,
       },
     ],
   },
@@ -160,24 +198,6 @@ const channels: Channel[] = [
         isNew: true,
         status: "active",
         acquisitionCount: 67,
-      },
-    ],
-  },
-  {
-    id: "order",
-    name: "订单获客",
-    icon: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-203hwGO5hn7hTByGiJltmtACbQF4yl.png",
-    stats: {
-      daily: 112,
-      growth: 7.8,
-    },
-    link: "/scenarios/order",
-    plans: [
-      {
-        id: "plan-9",
-        name: "电商订单获客",
-        status: "active",
-        acquisitionCount: 42,
       },
     ],
   },
@@ -286,7 +306,7 @@ export default function ScenariosPage() {
               <h1 className="text-xl font-semibold text-blue-600">场景获客</h1>
             </div>
 
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/scenarios/new")}>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/plans/new")}>
               <Plus className="h-4 w-4 mr-2" />
               新建计划
             </Button>
@@ -304,11 +324,15 @@ export default function ScenariosPage() {
                 >
                   <div className="flex flex-col items-center text-center space-y-3">
                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                      <img
-                        src={channel.icon || "/placeholder.svg"}
-                        alt={channel.name}
-                        className="w-8 h-8 object-contain"
-                      />
+                      {channel.id === "phone" ? (
+                        <Phone className="w-8 h-8 text-blue-500" />
+                      ) : (
+                        <img
+                          src={channel.icon || "/placeholder.svg"}
+                          alt={channel.name}
+                          className="w-8 h-8 object-contain"
+                        />
+                      )}
                     </div>
 
                     <h3 className="text-sm font-medium text-blue-600">{channel.name}</h3>

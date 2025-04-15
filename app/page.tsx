@@ -1,16 +1,21 @@
 "use client"
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bell, Smartphone, Users, Activity } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+
+// 导入Chart.js
+import { Chart, registerables } from "chart.js"
+Chart.register(...registerables)
 
 export default function Home() {
   const router = useRouter()
+  const chartRef = useRef(null)
+  const chartInstance = useRef(null)
 
   // 统一设备数据
   const [stats, setStats] = useState({
@@ -33,6 +38,80 @@ export default function Home() {
       setStats(mockStats)
     }
     fetchStats()
+  }, [])
+
+  // 使用Chart.js创建图表
+  useEffect(() => {
+    if (chartRef.current) {
+      // 如果已经有图表实例，先销毁它
+      if (chartInstance.current) {
+        chartInstance.current.destroy()
+      }
+
+      const ctx = chartRef.current.getContext("2d")
+
+      // 创建新的图表实例
+      chartInstance.current = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+          datasets: [
+            {
+              label: "获客数量",
+              data: [120, 150, 180, 200, 230, 210, 190],
+              backgroundColor: "rgba(59, 130, 246, 0.2)",
+              borderColor: "rgba(59, 130, 246, 1)",
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 4,
+              pointBackgroundColor: "rgba(59, 130, 246, 1)",
+              pointHoverRadius: 6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              titleColor: "#333",
+              bodyColor: "#666",
+              borderColor: "#ddd",
+              borderWidth: 1,
+              padding: 10,
+              displayColors: false,
+              callbacks: {
+                label: (context) => `获客数量: ${context.parsed.y}`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false,
+              },
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: "rgba(0, 0, 0, 0.05)",
+              },
+            },
+          },
+        },
+      })
+    }
+
+    // 组件卸载时清理图表实例
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy()
+      }
+    }
   }, [])
 
   const handleDevicesClick = () => {
@@ -76,16 +155,6 @@ export default function Home() {
       value: 167,
       growth: 10,
     },
-  ]
-
-  const dailyTrendData = [
-    { date: "周一", customers: 120 },
-    { date: "周二", customers: 150 },
-    { date: "周三", customers: 180 },
-    { date: "周四", customers: 200 },
-    { date: "周五", customers: 230 },
-    { date: "周六", customers: 210 },
-    { date: "周日", customers: 190 },
   ]
 
   return (
@@ -155,19 +224,11 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* 每日获客趋势 */}
+        {/* 每日获客趋势 - 使用Canvas和Chart.js */}
         <Card className="p-4 bg-white">
           <h2 className="text-lg font-semibold mb-4">每日获客趋势</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyTrendData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="customers" stroke="#3b82f6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="w-full h-64 relative">
+            <canvas ref={chartRef} />
           </div>
         </Card>
       </div>

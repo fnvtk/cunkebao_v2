@@ -1,188 +1,164 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Edit, Plus, Tag, MapPin, Search, ChevronLeft, DollarSign } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-
-// 模拟数据
-const initialPricingData = [
-  {
-    id: "1",
-    name: "高价值客户定价",
-    tags: ["高消费", "企业主", "高管"],
-    regions: ["北京", "上海", "广州", "深圳"],
-    price: 50,
-    createdAt: "2025-02-15",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "中等价值客户定价",
-    tags: ["白领", "稳定收入"],
-    regions: ["全国"],
-    price: 30,
-    createdAt: "2025-02-10",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "普通客户定价",
-    tags: ["普通用户"],
-    regions: ["全国"],
-    price: 15,
-    createdAt: "2025-01-20",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "学生群体定价",
-    tags: ["学生", "年轻人"],
-    regions: ["全国"],
-    price: 10,
-    createdAt: "2025-01-15",
-    status: "inactive",
-  },
-]
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Share2 } from "lucide-react"
+import Link from "next/link"
+import { TrafficTeamSettings } from "@/app/components/TrafficTeamSettings"
 
 export default function TrafficPricingPage() {
-  const router = useRouter()
-  const [pricingData, setPricingData] = useState(initialPricingData)
-  const [searchQuery, setSearchQuery] = useState("")
-
-  const filteredData = pricingData.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      item.regions.some((region) => region.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
-
-  const handleCreateNewPricing = () => {
-    router.push("/workspace/traffic-pricing/new")
-  }
-
-  const handleEditPricing = (id: string) => {
-    router.push(`/workspace/traffic-pricing/edit/${id}`)
-  }
-
-  const handleBack = () => {
-    router.push("/workspace")
-  }
+  const [activeTab, setActiveTab] = useState("pricing")
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8">
-      <div className="flex items-center justify-between border-b pb-4">
-        <Button variant="ghost" size="icon" onClick={handleBack}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h2 className="text-xl font-bold tracking-tight">流量定价</h2>
-        <Button onClick={handleCreateNewPricing}>
-          <Plus className="mr-2 h-4 w-4" />
-          新建定价
-        </Button>
-      </div>
-
-      <div className="flex items-center py-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索定价名称、标签或地区..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {filteredData.map((pricing) => (
-          <Card
-            key={pricing.id}
-            className={`border-l-4 ${
-              pricing.status === "active" ? "border-l-green-500" : "border-l-gray-300"
-            } hover:shadow-md transition-shadow`}
-          >
-            <CardContent className="p-4">
-              <div className="grid grid-cols-12 gap-4">
-                {/* 左侧: 名称、标签和地区 */}
-                <div className="col-span-12 sm:col-span-7">
-                  {/* 名称和状态 */}
-                  <div className="flex items-center mb-3">
-                    <h3 className="font-medium text-base">{pricing.name}</h3>
-                    <Badge variant={pricing.status === "active" ? "default" : "secondary"} className="ml-2">
-                      {pricing.status === "active" ? "启用中" : "已停用"}
-                    </Badge>
-                  </div>
-
-                  {/* 标签 */}
-                  <div className="flex items-start mb-2">
-                    <div className="flex items-center text-gray-500 mr-2 mt-0.5">
-                      <Tag className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-sm whitespace-nowrap">标签:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {pricing.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 地区 */}
-                  <div className="flex items-start">
-                    <div className="flex items-center text-gray-500 mr-2 mt-0.5">
-                      <MapPin className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-sm whitespace-nowrap">地区:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {pricing.regions.map((region, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {region}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 右侧: 价格和编辑按钮 */}
-                <div className="col-span-12 sm:col-span-5 flex items-center justify-between sm:justify-end sm:space-x-6 border-t sm:border-t-0 pt-3 sm:pt-0">
-                  {/* 价格 */}
-                  <div className="flex items-center">
-                    <DollarSign className="h-5 w-5 text-emerald-600" />
-                    <span className="text-xl font-bold text-emerald-600">{pricing.price}</span>
-                    <span className="text-sm text-gray-500 ml-1">元/人</span>
-                  </div>
-
-                  {/* 编辑按钮 */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditPricing(pricing.id)}
-                    className="hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    编辑
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredData.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">暂无定价数据</p>
-          <Button onClick={handleCreateNewPricing}>
-            <Plus className="mr-2 h-4 w-4" />
-            创建第一个定价
+    <div className="flex-1 p-4 bg-gray-50">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">流量分发与定价</h1>
+          <Button asChild variant="outline">
+            <Link href="/workspace/traffic-distribution/new">
+              <Share2 className="mr-2 h-4 w-4" />
+              创建分发计划
+            </Link>
           </Button>
         </div>
-      )}
+
+        <Tabs defaultValue="pricing" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 md:w-auto md:grid-cols-3">
+            <TabsTrigger value="pricing">价格设置</TabsTrigger>
+            <TabsTrigger value="distribution">分发设置</TabsTrigger>
+            <TabsTrigger value="teams">团队设置</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pricing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>基础价格设置</CardTitle>
+                <CardDescription>设置不同渠道的基础价格，这将影响所有分发计划</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="douyin-price">抖音获客价格 (元/位)</Label>
+                    <Input id="douyin-price" type="number" defaultValue="2" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="wechat-price">微信获客价格 (元/位)</Label>
+                    <Input id="wechat-price" type="number" defaultValue="3" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="xiaohongshu-price">小红书获客价格 (元/位)</Label>
+                    <Input id="xiaohongshu-price" type="number" defaultValue="4" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone-price">电话获客价格 (元/位)</Label>
+                    <Input id="phone-price" type="number" defaultValue="5" />
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button>保存设置</Button>
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>溢价规则设置</CardTitle>
+                <CardDescription>根据不同的客户特征设置溢价规则</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="age-pricing">年龄溢价</Label>
+                    <Select defaultValue="1.2">
+                      <SelectTrigger id="age-pricing">
+                        <SelectValue placeholder="选择溢价系数" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1.0">无溢价 (1.0倍)</SelectItem>
+                        <SelectItem value="1.2">轻度溢价 (1.2倍)</SelectItem>
+                        <SelectItem value="1.5">中度溢价 (1.5倍)</SelectItem>
+                        <SelectItem value="2.0">高度溢价 (2.0倍)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender-pricing">性别溢价</Label>
+                    <Select defaultValue="1.0">
+                      <SelectTrigger id="gender-pricing">
+                        <SelectValue placeholder="选择溢价系数" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1.0">无溢价 (1.0倍)</SelectItem>
+                        <SelectItem value="1.2">轻度溢价 (1.2倍)</SelectItem>
+                        <SelectItem value="1.5">中度溢价 (1.5倍)</SelectItem>
+                        <SelectItem value="2.0">高度溢价 (2.0倍)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button>保存设置</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="distribution" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>分发规则设置</CardTitle>
+                <CardDescription>设置默认的分发规则和优先级</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">优先分发高价值流量</Label>
+                      <p className="text-sm text-gray-500">优先分发价格更高的流量</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">智能匹配客户与团队</Label>
+                      <p className="text-sm text-gray-500">根据团队特性自动匹配合适的客户</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">均衡分发</Label>
+                      <p className="text-sm text-gray-500">尽量均衡地向各团队分发流量</p>
+                    </div>
+                    <Switch />
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end">
+                <Button>保存设置</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="teams" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>团队设置</CardTitle>
+                <CardDescription>配置流量分发的团队设置</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TrafficTeamSettings />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }

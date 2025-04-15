@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronLeft, Search, Filter, RefreshCw } from "lucide-react"
+import { ChevronLeft, Search, Filter, RefreshCw, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
@@ -96,17 +96,22 @@ export default function ChannelTrafficPage({
 
   return (
     <div className="flex-1 bg-gray-50 min-h-screen">
-      <header className="sticky top-0 z-10 bg-white border-b">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-medium">
-              {channelName}
-              {searchParams.type === "added" ? "已添加用户" : "获客用户"}
-            </h1>
+            <h1 className="text-xl font-semibold text-blue-600">{channelName}流量池</h1>
           </div>
+          <Button
+            variant="default"
+            onClick={() => router.push(`/scenarios/${params.channel}/new`)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            新建计划
+          </Button>
         </div>
       </header>
 

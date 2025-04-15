@@ -1,549 +1,67 @@
 "use client"
-
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { QrCode, X, ChevronDown, Plus, Maximize2, Upload, Download } from "lucide-react"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 
-const scenarios = [
-  { id: "haibao", name: "海报", type: "material" },
-  { id: "order", name: "订单", type: "api" },
-  { id: "douyin", name: "抖音", type: "social" },
-  { id: "xiaohongshu", name: "小红书", type: "social" },
-  { id: "gongzhonghao", name: "公众号", type: "social" },
-  { id: "payment", name: "支付码", type: "material" },
-  { id: "weixinqun", name: "微信群", type: "social" },
-  { id: "api", name: "API", type: "api" },
-]
-
-interface Account {
-  id: string
-  nickname: string
-  avatar: string
-}
-
-interface Material {
-  id: string
+export interface BasicSettingsProps {
   name: string
-  type: "poster" | "payment"
-  preview: string
+  setName: (name: string) => void
+  type: string
+  setType: (type: string) => void
+  startDate: Date | undefined
+  setStartDate: (date: Date | undefined) => void
+  endDate: Date | undefined
+  setEndDate: (date: Date | undefined) => void
 }
 
-interface BasicSettingsProps {
-  formData: any
-  onChange: (data: any) => void
-  onNext?: () => void
-}
-
-const posterTemplates = [
-  {
-    id: "poster-1",
-    name: "点击领取",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E9%A2%86%E5%8F%961-tipd1HI7da6qooY5NkhxQnXBnT5LGU.gif",
-  },
-  {
-    id: "poster-2",
-    name: "点击合作",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E5%90%88%E4%BD%9C-LPlMdgxtvhqCSr4IM1bZFEFDBF3ztI.gif",
-  },
-  {
-    id: "poster-3",
-    name: "点击咨询",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E5%92%A8%E8%AF%A2-FTiyAMAPop2g9LvjLOLDz0VwPg3KVu.gif",
-  },
-  {
-    id: "poster-4",
-    name: "点击签到",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E7%AD%BE%E5%88%B0-94TZIkjLldb4P2jTVlI6MkSDg0NbXi.gif",
-  },
-  {
-    id: "poster-5",
-    name: "点击了解",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E4%BA%86%E8%A7%A3-6GCl7mQVdO4WIiykJyweSubLsTwj71.gif",
-  },
-  {
-    id: "poster-6",
-    name: "点击报名",
-    preview:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%E7%82%B9%E5%87%BB%E6%8A%A5%E5%90%8D-Mj0nnva0BiASeDAIhNNaRRAbjPgjEj.gif",
-  },
-]
-
-const generateRandomAccounts = (count: number): Account[] => {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `account-${index + 1}`,
-    nickname: `账号-${Math.random().toString(36).substring(2, 7)}`,
-    avatar: `/placeholder.svg?height=40&width=40&text=${index + 1}`,
-  }))
-}
-
-const generatePosterMaterials = (): Material[] => {
-  return posterTemplates.map((template, index) => ({
-    id: template.id,
-    name: template.name,
-    type: "poster",
-    preview: template.preview,
-  }))
-}
-
-export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps) {
-  const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false)
-  const [isMaterialDialogOpen, setIsMaterialDialogOpen] = useState(false)
-  const [isQRCodeOpen, setIsQRCodeOpen] = useState(false)
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [previewImage, setPreviewImage] = useState("")
-  const [accounts] = useState<Account[]>(generateRandomAccounts(50))
-  const [materials] = useState<Material[]>(generatePosterMaterials())
-  const [selectedAccounts, setSelectedAccounts] = useState<Account[]>(
-    formData.accounts?.length > 0 ? formData.accounts : [],
-  )
-  const [selectedMaterials, setSelectedMaterials] = useState<Material[]>(
-    formData.materials?.length > 0 ? formData.materials : [],
-  )
-  const [showAllScenarios, setShowAllScenarios] = useState(false)
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const [importedTags, setImportedTags] = useState<
-    Array<{
-      phone: string
-      wechat: string
-      source?: string
-      orderAmount?: number
-      orderDate?: string
-    }>
-  >(formData.importedTags || [])
-
-  useEffect(() => {
-    if (!formData.planName) {
-      if (formData.materials?.length > 0) {
-        const today = new Date().toLocaleDateString("zh-CN").replace(/\//g, "")
-        onChange({ ...formData, planName: `海报${today}` })
-      } else {
-        onChange({ ...formData, planName: "场景" })
-      }
-    }
-  }, [formData, formData.materials, onChange])
-
-  const handleScenarioSelect = (scenarioId: string) => {
-    onChange({ ...formData, scenario: scenarioId })
-  }
-
-  const handleAccountSelect = (account: Account) => {
-    const updatedAccounts = [...selectedAccounts, account]
-    setSelectedAccounts(updatedAccounts)
-    onChange({ ...formData, accounts: updatedAccounts })
-  }
-
-  const handleMaterialSelect = (material: Material) => {
-    const updatedMaterials = [material]
-    setSelectedMaterials(updatedMaterials)
-    onChange({ ...formData, materials: updatedMaterials })
-    setIsMaterialDialogOpen(false)
-
-    // 更新计划名称
-    const today = new Date().toLocaleDateString("zh-CN").replace(/\//g, "")
-    onChange({ ...formData, planName: `海报${today}`, materials: updatedMaterials })
-  }
-
-  const handleRemoveAccount = (accountId: string) => {
-    const updatedAccounts = selectedAccounts.filter((a) => a.id !== accountId)
-    setSelectedAccounts(updatedAccounts)
-    onChange({ ...formData, accounts: updatedAccounts })
-  }
-
-  const handleRemoveMaterial = (materialId: string) => {
-    const updatedMaterials = selectedMaterials.filter((m) => m.id !== materialId)
-    setSelectedMaterials(updatedMaterials)
-    onChange({ ...formData, materials: updatedMaterials })
-  }
-
-  const handlePreviewImage = (imageUrl: string) => {
-    setPreviewImage(imageUrl)
-    setIsPreviewOpen(true)
-  }
-
-  const displayedScenarios = showAllScenarios ? scenarios : scenarios.slice(0, 3)
-
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result as string
-          const rows = content.split("\n").filter((row) => row.trim())
-          const tags = rows.slice(1).map((row) => {
-            const [phone, wechat, source, orderAmount, orderDate] = row.split(",")
-            return {
-              phone: phone.trim(),
-              wechat: wechat.trim(),
-              source: source?.trim(),
-              orderAmount: orderAmount ? Number(orderAmount) : undefined,
-              orderDate: orderDate?.trim(),
-            }
-          })
-          setImportedTags(tags)
-          onChange({ ...formData, importedTags: tags })
-        } catch (error) {
-          console.error("导入失败:", error)
-        }
-      }
-      reader.readAsText(file)
-    }
-  }
-
-  const handleDownloadTemplate = () => {
-    const template = "电话号码,微信号,来源,订单金额,下单日期\n13800138000,wxid_123,抖音,99.00,2024-03-03"
-    const blob = new Blob([template], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "订单导入模板.csv"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  }
-
+export function BasicSettings({
+  name,
+  setName,
+  type,
+  setType,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+}: BasicSettingsProps) {
   return (
-    <TooltipProvider>
-      <Card className="p-6">
-        <div className="space-y-6">
-          <div>
-            <Label className="text-base mb-4 block">获客场景</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {displayedScenarios.map((scenario) => (
-                <button
-                  key={scenario.id}
-                  className={`p-2 rounded-lg text-center transition-all ${
-                    formData.scenario === scenario.id
-                      ? "bg-blue-100 text-blue-600 font-medium"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
-                  onClick={() => handleScenarioSelect(scenario.id)}
-                >
-                  {scenario.name}
-                </button>
-              ))}
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="name">场景名称</Label>
+            <Input id="name" placeholder="输入场景名称" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="type">场景类型</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger id="type">
+                <SelectValue placeholder="选择场景类型" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="phone">手机号获客</SelectItem>
+                <SelectItem value="wechat">微信获客</SelectItem>
+                <SelectItem value="douyin">抖音获客</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid w-full items-center gap-1.5">
+              <Label>开始日期</Label>
+              <DatePicker date={startDate} setDate={setStartDate} />
             </div>
-            {!showAllScenarios && (
-              <Button variant="ghost" className="mt-2 w-full text-blue-600" onClick={() => setShowAllScenarios(true)}>
-                展开更多选项 <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+            <div className="grid w-full items-center gap-1.5">
+              <Label>结束日期</Label>
+              <DatePicker date={endDate} setDate={setEndDate} />
+            </div>
           </div>
-
-          <div>
-            <Label htmlFor="planName">计划名称</Label>
-            <Input
-              id="planName"
-              value={formData.planName}
-              onChange={(e) => onChange({ ...formData, planName: e.target.value })}
-              placeholder="请输入计划名称"
-              className="mt-2"
-            />
-          </div>
-
-          {formData.scenario && (
-            <>
-              {scenarios.find((s) => s.id === formData.scenario)?.type === "social" && (
-                <div>
-                  <Label>绑定账号</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 justify-start"
-                      onClick={() => setIsAccountDialogOpen(true)}
-                    >
-                      {selectedAccounts.length > 0 ? `已选择 ${selectedAccounts.length} 个账号` : "选择账号"}
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setIsQRCodeOpen(true)}>
-                      <QrCode className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {selectedAccounts.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedAccounts.map((account) => (
-                        <div key={account.id} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
-                          <img
-                            src={account.avatar || "/placeholder.svg"}
-                            alt={account.nickname}
-                            className="w-4 h-4 rounded-full mr-2"
-                          />
-                          <span className="text-sm">{account.nickname}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-2 p-0"
-                            onClick={() => handleRemoveAccount(account.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {scenarios.find((s) => s.id === formData.scenario)?.type === "material" && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <Label>选择海报</Label>
-                    <Button variant="outline" onClick={() => setIsMaterialDialogOpen(true)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* 海报展示区域 */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {materials.map((material) => (
-                      <div
-                        key={material.id}
-                        className={`relative cursor-pointer rounded-lg overflow-hidden group ${
-                          selectedMaterials.find((m) => m.id === material.id)
-                            ? "ring-2 ring-blue-600"
-                            : "hover:ring-2 hover:ring-blue-600"
-                        }`}
-                        onClick={() => handleMaterialSelect(material)}
-                      >
-                        <img
-                          src={material.preview || "/placeholder.svg"}
-                          alt={material.name}
-                          className="w-full aspect-[9/16] object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handlePreviewImage(material.preview)
-                            }}
-                          >
-                            <Maximize2 className="h-4 w-4 text-white" />
-                          </Button>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 text-white">
-                          <div className="text-sm truncate">{material.name}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {selectedMaterials.length > 0 && (
-                    <div className="mt-4">
-                      <Label>已选择的海报</Label>
-                      <div className="mt-2">
-                        <div className="relative w-full max-w-[200px]">
-                          <img
-                            src={selectedMaterials[0].preview || "/placeholder.svg"}
-                            alt={selectedMaterials[0].name}
-                            className="w-full aspect-[9/16] object-cover rounded-lg cursor-pointer"
-                            onClick={() => handlePreviewImage(selectedMaterials[0].preview)}
-                          />
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={() => handleRemoveMaterial(selectedMaterials[0].id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {scenarios.find((s) => s.id === formData.scenario)?.id === "order" && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <Label>订单导入</Label>
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={handleDownloadTemplate}>
-                        <Download className="h-4 w-4 mr-2" />
-                        下载模板
-                      </Button>
-                      <Button onClick={() => setIsImportDialogOpen(true)}>
-                        <Upload className="h-4 w-4 mr-2" />
-                        导入订单
-                      </Button>
-                    </div>
-                  </div>
-
-                  {importedTags.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">已导入 {importedTags.length} 条数据</h4>
-                      <div className="max-h-[300px] overflow-auto border rounded-md">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>电话号码</TableHead>
-                              <TableHead>微信号</TableHead>
-                              <TableHead>来源</TableHead>
-                              <TableHead>订单金额</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {importedTags.slice(0, 5).map((tag, index) => (
-                              <TableRow key={index}>
-                                <TableCell>{tag.phone}</TableCell>
-                                <TableCell>{tag.wechat}</TableCell>
-                                <TableCell>{tag.source}</TableCell>
-                                <TableCell>{tag.orderAmount}</TableCell>
-                              </TableRow>
-                            ))}
-                            {importedTags.length > 5 && (
-                              <TableRow>
-                                <TableCell colSpan={4} className="text-center text-gray-500">
-                                  还有 {importedTags.length - 5} 条数据未显示
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="enabled">是否启用</Label>
-            <Switch
-              id="enabled"
-              checked={formData.enabled}
-              onCheckedChange={(checked) => onChange({ ...formData, enabled: checked })}
-            />
-          </div>
-
-          <Button className="w-full h-12 text-base" onClick={onNext}>
-            下一步
-          </Button>
         </div>
-
-        {/* 账号选择对话框 */}
-        <Dialog open={isAccountDialogOpen} onOpenChange={setIsAccountDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>选择账号</DialogTitle>
-            </DialogHeader>
-            <div className="mt-4 max-h-[400px] overflow-y-auto">
-              <div className="space-y-2">
-                {accounts.map((account) => (
-                  <div
-                    key={account.id}
-                    className="flex items-center space-x-3 p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                    onClick={() => handleAccountSelect(account)}
-                  >
-                    <img src={account.avatar || "/placeholder.svg"} alt="" className="w-10 h-10 rounded-full" />
-                    <span className="flex-1">{account.nickname}</span>
-                    {selectedAccounts.find((a) => a.id === account.id) && (
-                      <div className="w-4 h-4 rounded-full bg-blue-600" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 二维码对话框 */}
-        <Dialog open={isQRCodeOpen} onOpenChange={setIsQRCodeOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>绑定账号</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col items-center p-6">
-              <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <img src="/placeholder.svg?height=256&width=256" alt="二维码" className="w-full h-full" />
-              </div>
-              <p className="mt-4 text-sm text-gray-600">请用相应的APP扫码</p>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 图片预览对话框 */}
-        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>海报预览</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center items-center p-4">
-              <img src={previewImage || "/placeholder.svg"} alt="预览" className="max-h-[80vh] object-contain" />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 订单导入对话框 */}
-        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>导入订单标签</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Input type="file" accept=".csv" onChange={handleFileImport} className="flex-1" />
-              </div>
-              <div className="max-h-[400px] overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>电话号码</TableHead>
-                      <TableHead>微信号</TableHead>
-                      <TableHead>来源</TableHead>
-                      <TableHead>订单金额</TableHead>
-                      <TableHead>下单日期</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {importedTags.map((tag, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{tag.phone}</TableCell>
-                        <TableCell>{tag.wechat}</TableCell>
-                        <TableCell>{tag.source}</TableCell>
-                        <TableCell>{tag.orderAmount}</TableCell>
-                        <TableCell>{tag.orderDate}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-                取消
-              </Button>
-              <Button
-                onClick={() => {
-                  onChange({ ...formData, importedTags })
-                  setIsImportDialogOpen(false)
-                }}
-              >
-                确认导入
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </Card>
-    </TooltipProvider>
+      </CardContent>
+    </Card>
   )
 }
 

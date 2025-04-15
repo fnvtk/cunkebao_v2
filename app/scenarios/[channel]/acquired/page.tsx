@@ -49,15 +49,14 @@ export default function AcquiredCustomersPage({ params }: { params: { channel: s
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="flex items-center justify-between p-4">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
+        <div className="flex items-center p-4">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-medium">{channelName}已获客用户</h1>
+            <h1 className="text-xl font-semibold text-blue-600">{channelName}已获客</h1>
           </div>
-          <div className="text-sm text-gray-500">共 {customers.length} 位用户</div>
         </div>
       </header>
 

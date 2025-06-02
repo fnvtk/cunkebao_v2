@@ -25,6 +25,19 @@ export interface Device {
   lastActive: string
   addFriendStatus: "normal" | "abnormal"
   remark?: string
+  // 新增属性
+  model?: string // 设备型号
+  category?: string // 设备分类
+  todayAdded?: number // 今日新增好友
+  totalTasks?: number // 总任务数
+  completedTasks?: number // 已完成任务数
+  activePlans?: string[] // 活跃计划ID列表
+  planNames?: string[] // 计划名称列表
+  tags?: string[] // 设备标签
+  location?: string // 设备位置
+  operator?: string // 操作员
+  purchaseDate?: string // 购买日期
+  warrantyExpiry?: string // 保修到期日期
 }
 
 // 设备统计信息
@@ -116,3 +129,27 @@ export interface DeviceSelectResponse {
   }
 }
 
+// 新增设备分类枚举
+export enum DeviceCategory {
+  ACQUISITION = "acquisition", // 获客设备
+  MAINTENANCE = "maintenance", // 维护设备
+  TESTING = "testing", // 测试设备
+  BACKUP = "backup", // 备用设备
+}
+
+// 新增设备过滤参数
+export interface DeviceFilterParams {
+  keyword?: string
+  status?: DeviceStatus[]
+  type?: DeviceType[]
+  category?: DeviceCategory[]
+  tags?: string[]
+  models?: string[]
+  batteryRange?: [number, number]
+  friendCountRange?: [number, number]
+  hasActivePlans?: boolean
+  dateRange?: {
+    start: string
+    end: string
+  }
+}

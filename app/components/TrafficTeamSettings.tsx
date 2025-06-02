@@ -174,4 +174,3 @@ export function TrafficTeamSettings({ formData = {}, onChange }: TrafficTeamSett
     </Card>
   )
 }
-

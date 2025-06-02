@@ -40,4 +40,3 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
     </div>
   )
 }
-

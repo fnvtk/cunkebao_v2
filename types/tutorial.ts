@@ -10,4 +10,3 @@ export interface PageTutorial {
   pageId: string
   videos: TutorialVideo[]
 }
-

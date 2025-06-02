@@ -65,4 +65,3 @@ export function Step({ title, description }: StepProps) {
     </div>
   )
 }
-

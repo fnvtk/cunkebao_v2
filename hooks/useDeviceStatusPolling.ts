@@ -44,4 +44,3 @@ export function useDeviceStatusPolling(devices: Device[]) {
 
   return statuses
 }
-

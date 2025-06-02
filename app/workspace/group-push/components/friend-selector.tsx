@@ -344,4 +344,3 @@ export function FriendSelector({ onSelectionChange, defaultSelectedFriendIds = [
     </div>
   )
 }
-

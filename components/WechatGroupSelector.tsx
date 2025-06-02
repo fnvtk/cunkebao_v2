@@ -108,4 +108,3 @@ export function WechatGroupSelector({ open, onOpenChange, selectedGroups, onSele
     </Dialog>
   )
 }
-

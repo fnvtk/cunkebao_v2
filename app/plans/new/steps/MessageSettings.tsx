@@ -82,7 +82,7 @@ export function MessageSettings({ formData, onChange, onNext, onPrev }: MessageS
           type: "text",
           content: "",
           sendInterval: 5,
-          intervalUnit: "minutes",
+          intervalUnit: "seconds", // 默认改为秒
         },
       ],
     },
@@ -103,7 +103,7 @@ export function MessageSettings({ formData, onChange, onNext, onPrev }: MessageS
     if (dayPlans[dayIndex].day === 0) {
       // 即时消息使用间隔设置
       newMessage.sendInterval = 5
-      newMessage.intervalUnit = "minutes"
+      newMessage.intervalUnit = "seconds" // 默认改为秒
     } else {
       // 非即时消息使用具体时间设置
       newMessage.scheduledTime = {
@@ -552,4 +552,3 @@ export function MessageSettings({ formData, onChange, onNext, onPrev }: MessageS
     </Card>
   )
 }
-

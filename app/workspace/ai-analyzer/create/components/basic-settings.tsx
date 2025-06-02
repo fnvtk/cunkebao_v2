@@ -162,4 +162,3 @@ export function BasicSettings({ formData, updateFormData, onNext }: BasicSetting
     </div>
   )
 }
-

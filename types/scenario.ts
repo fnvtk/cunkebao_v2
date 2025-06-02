@@ -109,4 +109,3 @@ export const scenarioApi = {
     return response.json()
   },
 }
-

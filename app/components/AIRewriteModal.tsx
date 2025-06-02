@@ -51,4 +51,3 @@ export function AIRewriteModal({ isOpen, onClose, originalContent }: AIRewriteMo
     </div>
   )
 }
-

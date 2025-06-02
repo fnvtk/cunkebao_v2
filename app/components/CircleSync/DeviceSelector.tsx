@@ -120,4 +120,3 @@ export function DeviceSelector({ onNext, onPrev }) {
     </Card>
   )
 }
-

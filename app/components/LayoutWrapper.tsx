@@ -1,23 +1,40 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-import BottomNav from "./BottomNav"
-import { VideoTutorialButton } from "@/components/VideoTutorialButton"
 import type React from "react"
+import { createContext, useContext, useState } from "react"
+import AdaptiveLayout from "./AdaptiveLayout"
 
-export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+// 创建视图模式上下文
+const ViewModeContext = createContext<{
+  viewMode: "mobile" | "desktop"
+  setViewMode: (mode: "mobile" | "desktop") => void
+}>({
+  viewMode: "mobile",
+  setViewMode: () => {},
+})
 
-  // 只在四个主页显示底部导航栏：首页、场景获客、工作台和我的
-  const mainPages = ["/", "/scenarios", "/workspace", "/profile"]
-  const showBottomNav = mainPages.includes(pathname)
+// 导出 useViewMode hook
+export function useViewMode() {
+  const context = useContext(ViewModeContext)
+  if (!context) {
+    throw new Error("useViewMode must be used within ViewModeProvider")
+  }
+  return context
+}
+
+interface LayoutWrapperProps {
+  children: React.ReactNode
+}
+
+function LayoutWrapper({ children }: LayoutWrapperProps) {
+  const [viewMode, setViewMode] = useState<"mobile" | "desktop">("mobile")
 
   return (
-    <main className="max-w-[390px] mx-auto bg-white min-h-screen flex flex-col relative">
-      {children}
-      {showBottomNav && <BottomNav />}
-      {showBottomNav && <VideoTutorialButton />}
-    </main>
+    <ViewModeContext.Provider value={{ viewMode, setViewMode }}>
+      <AdaptiveLayout>{children}</AdaptiveLayout>
+    </ViewModeContext.Provider>
   )
 }
 
+export default LayoutWrapper
+export { LayoutWrapper }

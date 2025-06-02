@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const menuItems = [
   { href: "/devices", label: "设备管理" },
@@ -38,9 +39,19 @@ export default function ProfilePage() {
         <div className="flex justify-between items-center p-4">
           <h1 className="text-xl font-semibold text-blue-600">我的</h1>
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon">
-              <Settings className="w-5 h-5" />
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">设置选项</h4>
+                  {/* 移除了视图模式切换按钮 */}
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>
@@ -116,4 +127,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

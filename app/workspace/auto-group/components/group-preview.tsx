@@ -94,4 +94,3 @@ export function GroupPreview({ groupIndex, members, isCreating, isCompleted, onR
     </Card>
   )
 }
-

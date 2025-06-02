@@ -764,4 +764,3 @@ export default function WechatAccountDetailPage({ params }: { params: { id: stri
     </TooltipProvider>
   )
 }
-

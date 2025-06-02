@@ -112,4 +112,3 @@ export function ExpandableAcquisitionCard({ plan, onEdit, onPause, onResume }: E
     </Card>
   )
 }
-

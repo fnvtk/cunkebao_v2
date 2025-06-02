@@ -57,4 +57,3 @@ export function getPageTutorials(path: string): TutorialVideo[] {
 
   return pageTutorial?.videos || []
 }
-

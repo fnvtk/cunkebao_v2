@@ -12,4 +12,3 @@ export interface TrafficUser {
   assignedTo: string
   category: "potential" | "customer" | "lost"
 }
-

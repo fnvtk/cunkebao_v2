@@ -272,4 +272,3 @@ export function DeviceSelector({ formData, onChange, onNext, onPrev }: DeviceSel
     </Card>
   )
 }
-

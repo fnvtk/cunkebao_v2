@@ -240,4 +240,3 @@ export function TimeSettings({ initialData, onSave }: TimeSettingsProps) {
     </div>
   )
 }
-

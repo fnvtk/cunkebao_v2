@@ -260,4 +260,3 @@ export function LikeConfig({ initialData, onSave, onBack }: LikeConfigProps) {
     </div>
   )
 }
-

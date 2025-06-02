@@ -10,7 +10,8 @@ import type {
   DeviceStatus,
 } from "@/types/device"
 
-const API_BASE = "/api/devices"
+// 更新API基础URL
+const API_BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/devices`
 
 // 设备管理API
 export const deviceApi = {
@@ -46,13 +47,15 @@ export const deviceApi = {
 
   // 查询设备列表
   async query(params: QueryDeviceParams): Promise<ApiResponse<PaginatedResponse<Device>>> {
-    const queryString = new URLSearchParams({
-      ...params,
-      tags: params.tags ? JSON.stringify(params.tags) : "",
-      dateRange: params.dateRange ? JSON.stringify(params.dateRange) : "",
-    }).toString()
+    const queryParams = new URLSearchParams()
 
-    const response = await fetch(`${API_BASE}?${queryString}`)
+    if (params.page) queryParams.set("page", params.page.toString())
+    if (params.pageSize) queryParams.set("limit", params.pageSize.toString())
+    if (params.keyword) queryParams.set("keyword", params.keyword)
+    if (params.status) queryParams.set("status", params.status)
+    if (params.type) queryParams.set("type", params.type)
+
+    const response = await fetch(`${API_BASE}?${queryParams.toString()}`)
     return response.json()
   },
 
@@ -128,4 +131,3 @@ export const deviceApi = {
     return response.json()
   },
 }
-

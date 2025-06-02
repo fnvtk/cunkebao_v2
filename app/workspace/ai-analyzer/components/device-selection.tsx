@@ -212,4 +212,3 @@ export function DeviceSelection({ formData, updateFormData, onNext }: DeviceSele
     </div>
   )
 }
-

@@ -32,4 +32,3 @@ export function DeviceSelection({ selectedDevices, onChange, onNext, onPrev }: D
     </div>
   )
 }
-

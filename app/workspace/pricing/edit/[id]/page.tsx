@@ -531,4 +531,3 @@ export default function EditRulePage({ params }: { params: { id: string } }) {
     </div>
   )
 }
-

@@ -122,4 +122,3 @@ export const contentApi = {
     return response.json()
   },
 }
-

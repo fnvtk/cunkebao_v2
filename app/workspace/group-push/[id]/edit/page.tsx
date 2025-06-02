@@ -190,4 +190,3 @@ export default function EditPushPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
-

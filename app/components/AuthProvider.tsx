@@ -64,4 +64,3 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return <AuthContext.Provider value={{ isAuthenticated, token, login, logout }}>{children}</AuthContext.Provider>
 }
-

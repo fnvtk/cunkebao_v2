@@ -199,4 +199,3 @@ function calculatePassRate(acquired: number, added: number) {
   if (acquired === 0) return 0
   return Math.round((added / acquired) * 100)
 }
-

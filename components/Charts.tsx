@@ -45,4 +45,3 @@ export function LineChart({ data, xField, yField }: LineChartProps) {
 
   return <Line {...config} />
 }
-

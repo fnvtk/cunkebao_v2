@@ -69,4 +69,3 @@ export function SpeechToTextProcessor({
 
   return null // 这是一个功能性组件，不渲染任何UI
 }
-

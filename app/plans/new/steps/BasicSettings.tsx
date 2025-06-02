@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { QrCode, X, ChevronDown, Plus, Maximize2, Upload, Download, Settings } from "lucide-react"
+import { QrCode, X, ChevronDown, Plus, Maximize2, Upload, Download, Settings, Minus } from "lucide-react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 import {
@@ -33,6 +33,86 @@ const scenarios = [
   { id: "api", name: "API获客", type: "api" }, // API获客放在最后
 ]
 
+const phoneCallTags = [
+  { id: "tag-1", name: "咨询", color: "bg-blue-100 text-blue-800" },
+  { id: "tag-2", name: "投诉", color: "bg-red-100 text-red-800" },
+  { id: "tag-3", name: "合作", color: "bg-green-100 text-green-800" },
+  { id: "tag-4", name: "价格", color: "bg-orange-100 text-orange-800" },
+  { id: "tag-5", name: "售后", color: "bg-purple-100 text-purple-800" },
+  { id: "tag-6", name: "订单", color: "bg-yellow-100 text-yellow-800" },
+  { id: "tag-7", name: "物流", color: "bg-teal-100 text-teal-800" },
+]
+
+// 不同场景的预设标签
+const scenarioTags = {
+  haibao: [
+    { id: "poster-tag-1", name: "活动推广", color: "bg-blue-100 text-blue-800" },
+    { id: "poster-tag-2", name: "产品宣传", color: "bg-green-100 text-green-800" },
+    { id: "poster-tag-3", name: "品牌展示", color: "bg-purple-100 text-purple-800" },
+    { id: "poster-tag-4", name: "优惠促销", color: "bg-red-100 text-red-800" },
+    { id: "poster-tag-5", name: "新品发布", color: "bg-orange-100 text-orange-800" },
+  ],
+  order: [
+    { id: "order-tag-1", name: "新订单", color: "bg-green-100 text-green-800" },
+    { id: "order-tag-2", name: "复购客户", color: "bg-blue-100 text-blue-800" },
+    { id: "order-tag-3", name: "高价值订单", color: "bg-purple-100 text-purple-800" },
+    { id: "order-tag-4", name: "待付款", color: "bg-yellow-100 text-yellow-800" },
+    { id: "order-tag-5", name: "已完成", color: "bg-gray-100 text-gray-800" },
+  ],
+  douyin: [
+    { id: "douyin-tag-1", name: "短视频", color: "bg-pink-100 text-pink-800" },
+    { id: "douyin-tag-2", name: "直播", color: "bg-red-100 text-red-800" },
+    { id: "douyin-tag-3", name: "带货", color: "bg-orange-100 text-orange-800" },
+    { id: "douyin-tag-4", name: "粉丝互动", color: "bg-blue-100 text-blue-800" },
+    { id: "douyin-tag-5", name: "热门话题", color: "bg-purple-100 text-purple-800" },
+  ],
+  xiaohongshu: [
+    { id: "xhs-tag-1", name: "种草笔记", color: "bg-red-100 text-red-800" },
+    { id: "xhs-tag-2", name: "美妆", color: "bg-pink-100 text-pink-800" },
+    { id: "xhs-tag-3", name: "穿搭", color: "bg-purple-100 text-purple-800" },
+    { id: "xhs-tag-4", name: "生活方式", color: "bg-green-100 text-green-800" },
+    { id: "xhs-tag-5", name: "好物推荐", color: "bg-orange-100 text-orange-800" },
+  ],
+  phone: phoneCallTags,
+  gongzhonghao: [
+    { id: "gzh-tag-1", name: "文章推送", color: "bg-blue-100 text-blue-800" },
+    { id: "gzh-tag-2", name: "活动通知", color: "bg-green-100 text-green-800" },
+    { id: "gzh-tag-3", name: "产品介绍", color: "bg-purple-100 text-purple-800" },
+    { id: "gzh-tag-4", name: "用户服务", color: "bg-orange-100 text-orange-800" },
+    { id: "gzh-tag-5", name: "品牌故事", color: "bg-gray-100 text-gray-800" },
+  ],
+  weixinqun: [
+    { id: "wxq-tag-1", name: "群活动", color: "bg-green-100 text-green-800" },
+    { id: "wxq-tag-2", name: "产品分享", color: "bg-blue-100 text-blue-800" },
+    { id: "wxq-tag-3", name: "用户交流", color: "bg-purple-100 text-purple-800" },
+    { id: "wxq-tag-4", name: "优惠信息", color: "bg-pink-100 text-pink-800" },
+    { id: "wxq-tag-5", name: "答疑解惑", color: "bg-orange-100 text-orange-800" },
+    { id: "wxq-tag-6", name: "新人欢迎", color: "bg-yellow-100 text-yellow-800" },
+    { id: "wxq-tag-7", name: "群规通知", color: "bg-gray-100 text-gray-800" },
+    { id: "wxq-tag-8", name: "活跃互动", color: "bg-indigo-100 text-indigo-800" },
+  ],
+  payment: [
+    { id: "pay-tag-1", name: "扫码支付", color: "bg-green-100 text-green-800" },
+    { id: "pay-tag-2", name: "线下门店", color: "bg-blue-100 text-blue-800" },
+    { id: "pay-tag-3", name: "活动收款", color: "bg-purple-100 text-purple-800" },
+    { id: "pay-tag-4", name: "服务费用", color: "bg-orange-100 text-orange-800" },
+    { id: "pay-tag-5", name: "会员充值", color: "bg-yellow-100 text-yellow-800" },
+  ],
+  api: [
+    { id: "api-tag-1", name: "系统对接", color: "bg-blue-100 text-blue-800" },
+    { id: "api-tag-2", name: "数据同步", color: "bg-green-100 text-green-800" },
+    { id: "api-tag-3", name: "自动化", color: "bg-purple-100 text-purple-800" },
+    { id: "api-tag-4", name: "第三方平台", color: "bg-orange-100 text-orange-800" },
+    { id: "api-tag-5", name: "实时推送", color: "bg-gray-100 text-gray-800" },
+  ],
+}
+
+interface BasicSettingsProps {
+  formData: any
+  onChange: (data: any) => void
+  onNext?: () => void
+}
+
 interface Account {
   id: string
   nickname: string
@@ -42,14 +122,8 @@ interface Account {
 interface Material {
   id: string
   name: string
-  type: "poster" | "payment"
+  type: string
   preview: string
-}
-
-interface BasicSettingsProps {
-  formData: any
-  onChange: (data: any) => void
-  onNext?: () => void
 }
 
 const posterTemplates = [
@@ -135,12 +209,37 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
     }>
   >(formData.importedTags || [])
 
+  const [selectedScenarioTags, setSelectedScenarioTags] = useState<string[]>(formData.scenarioTags || [])
+  const [customTagInput, setCustomTagInput] = useState("")
+  const [customTags, setCustomTags] = useState<Array<{ id: string; name: string; color: string }>>(
+    formData.customTags || [],
+  )
+
   // 初始化电话获客设置
   const [phoneSettings, setPhoneSettings] = useState({
     autoAdd: formData.phoneSettings?.autoAdd ?? true,
     speechToText: formData.phoneSettings?.speechToText ?? true,
     questionExtraction: formData.phoneSettings?.questionExtraction ?? true,
   })
+
+  const [selectedPhoneTags, setSelectedPhoneTags] = useState<string[]>(formData.phoneTags || [])
+  const [phoneCallType, setPhoneCallType] = useState(formData.phoneCallType || "both")
+
+  // 处理标签选择
+  const handleTagToggle = (tagId: string) => {
+    const newTags = selectedPhoneTags.includes(tagId)
+      ? selectedPhoneTags.filter((id) => id !== tagId)
+      : [...selectedPhoneTags, tagId]
+
+    setSelectedPhoneTags(newTags)
+    onChange({ ...formData, phoneTags: newTags })
+  }
+
+  // 处理通话类型选择
+  const handleCallTypeChange = (type: string) => {
+    setPhoneCallType(type)
+    onChange({ ...formData, phoneCallType: type })
+  }
 
   // 初始化时，如果没有选择场景，默认选择海报获客
   useEffect(() => {
@@ -159,13 +258,62 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
   }, [formData, onChange])
 
   const handleScenarioSelect = (scenarioId: string) => {
-    onChange({ ...formData, scenario: scenarioId })
-
-    // 如果选择了电话获客，自动更新计划名称
+    // 如果选择了电话获客，更新计划名称
     if (scenarioId === "phone") {
       const today = new Date().toLocaleDateString("zh-CN").replace(/\//g, "")
-      onChange({ ...formData, planName: `电话获客${today}` })
+      onChange({ ...formData, scenario: scenarioId, planName: `电话获客${today}` })
+    } else {
+      onChange({ ...formData, scenario: scenarioId })
     }
+  }
+
+  // 处理场景标签选择
+  const handleScenarioTagToggle = (tagId: string) => {
+    const newTags = selectedScenarioTags.includes(tagId)
+      ? selectedScenarioTags.filter((id) => id !== tagId)
+      : [...selectedScenarioTags, tagId]
+
+    setSelectedScenarioTags(newTags)
+    onChange({ ...formData, scenarioTags: newTags })
+  }
+
+  // 添加自定义标签
+  const handleAddCustomTag = () => {
+    if (!customTagInput.trim()) return
+
+    const colors = [
+      "bg-blue-100 text-blue-800",
+      "bg-green-100 text-green-800",
+      "bg-purple-100 text-purple-800",
+      "bg-red-100 text-red-800",
+      "bg-orange-100 text-orange-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-gray-100 text-gray-800",
+      "bg-pink-100 text-pink-800",
+    ]
+
+    const newTag = {
+      id: `custom-${Date.now()}`,
+      name: customTagInput.trim(),
+      color: colors[Math.floor(Math.random() * colors.length)],
+    }
+
+    const updatedCustomTags = [...customTags, newTag]
+    setCustomTags(updatedCustomTags)
+    setCustomTagInput("")
+    onChange({ ...formData, customTags: updatedCustomTags })
+  }
+
+  // 删除自定义标签
+  const handleRemoveCustomTag = (tagId: string) => {
+    const updatedCustomTags = customTags.filter((tag) => tag.id !== tagId)
+    setCustomTags(updatedCustomTags)
+    onChange({ ...formData, customTags: updatedCustomTags })
+
+    // 同时从选中标签中移除
+    const updatedSelectedTags = selectedScenarioTags.filter((id) => id !== tagId)
+    setSelectedScenarioTags(updatedSelectedTags)
+    onChange({ ...formData, scenarioTags: updatedSelectedTags, customTags: updatedCustomTags })
   }
 
   const handleAccountSelect = (account: Account) => {
@@ -291,47 +439,136 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
             />
           </div>
 
+          {/* 场景标签选择 */}
           {formData.scenario && (
-            <>
-              {scenarios.find((s) => s.id === formData.scenario)?.type === "social" && (
-                <div>
-                  <Label>绑定账号</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1 justify-start"
-                      onClick={() => setIsAccountDialogOpen(true)}
-                    >
-                      {selectedAccounts.length > 0 ? `已选择 ${selectedAccounts.length} 个账号` : "选择账号"}
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => setIsQRCodeOpen(true)}>
-                      <QrCode className="h-4 w-4" />
-                    </Button>
+            <div className="mt-6">
+              <Label className="text-base mb-3 block">
+                {scenarios.find((s) => s.id === formData.scenario)?.name}标签（可多选）
+              </Label>
+
+              {/* 预设标签 */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {(scenarioTags[formData.scenario as keyof typeof scenarioTags] || []).map((tag) => (
+                  <div
+                    key={tag.id}
+                    className={`px-3 py-2 rounded-full text-sm cursor-pointer transition-all ${
+                      selectedScenarioTags.includes(tag.id)
+                        ? tag.color + " ring-2 ring-blue-400"
+                        : tag.color + " hover:ring-1 hover:ring-gray-300"
+                    }`}
+                    onClick={() => handleScenarioTagToggle(tag.id)}
+                  >
+                    {tag.name}
                   </div>
-                  {selectedAccounts.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedAccounts.map((account) => (
-                        <div key={account.id} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
-                          <img
-                            src={account.avatar || "/placeholder.svg"}
-                            alt={account.nickname}
-                            className="w-4 h-4 rounded-full mr-2"
-                          />
-                          <span className="text-sm">{account.nickname}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-2 p-0"
-                            onClick={() => handleRemoveAccount(account.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                ))}
+              </div>
+
+              {/* 自定义标签 */}
+              {customTags.length > 0 && (
+                <div className="mb-4">
+                  <Label className="text-sm text-gray-600 mb-2 block">自定义标签</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {customTags.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className={`px-3 py-2 rounded-full text-sm cursor-pointer transition-all relative group ${
+                          selectedScenarioTags.includes(tag.id)
+                            ? tag.color + " ring-2 ring-blue-400"
+                            : tag.color + " hover:ring-1 hover:ring-gray-300"
+                        }`}
+                        onClick={() => handleScenarioTagToggle(tag.id)}
+                      >
+                        {tag.name}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveCustomTag(tag.id)
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* 添加自定义标签 */}
+              <div className="flex gap-2">
+                <Input
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  placeholder="输入自定义标签名称"
+                  className="flex-1"
+                  maxLength={8}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleAddCustomTag()
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleAddCustomTag}
+                  disabled={!customTagInput.trim()}
+                  variant="outline"
+                  className="px-4"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  添加
+                </Button>
+              </div>
+
+              {selectedScenarioTags.length > 0 && (
+                <div className="mt-3 text-sm text-gray-500">已选择 {selectedScenarioTags.length} 个标签</div>
+              )}
+            </div>
+          )}
+
+          {formData.scenario && (
+            <>
+              {scenarios.find((s) => s.id === formData.scenario)?.type === "social" &&
+                formData.scenario !== "phone" && (
+                  <div>
+                    <Label>绑定账号</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 justify-start"
+                        onClick={() => setIsAccountDialogOpen(true)}
+                      >
+                        {selectedAccounts.length > 0 ? `已选择 ${selectedAccounts.length} 个账号` : "选择账号"}
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => setIsQRCodeOpen(true)}>
+                        <QrCode className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {selectedAccounts.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedAccounts.map((account) => (
+                          <div key={account.id} className="flex items-center bg-gray-100 rounded-full px-3 py-1">
+                            <img
+                              src={account.avatar || "/placeholder.svg"}
+                              alt={account.nickname}
+                              className="w-4 h-4 rounded-full mr-2"
+                            />
+                            <span className="text-sm">{account.nickname}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="ml-2 p-0"
+                              onClick={() => handleRemoveAccount(account.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* 电话获客特殊设置 */}
               {formData.scenario === "phone" && (
@@ -393,6 +630,59 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
                     提示：电话获客功能将自动记录来电信息，并根据设置执行相应操作
                   </p>
                 </Card>
+              )}
+
+              {formData.scenario === "phone" && (
+                <>
+                  {/* 添加电话通话类型选择 */}
+                  <div className="mt-6">
+                    <Label className="text-base mb-2 block">通话类型</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div
+                        className={`p-3 border rounded-lg text-center cursor-pointer ${
+                          phoneCallType === "outbound" || phoneCallType === "both"
+                            ? "bg-blue-50 border-blue-300"
+                            : "bg-white hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleCallTypeChange(phoneCallType === "inbound" ? "both" : "outbound")}
+                      >
+                        <div className="font-medium">发起外呼</div>
+                        <div className="text-sm text-gray-500">主动向客户发起电话</div>
+                      </div>
+                      <div
+                        className={`p-3 border rounded-lg text-center cursor-pointer ${
+                          phoneCallType === "inbound" || phoneCallType === "both"
+                            ? "bg-blue-50 border-blue-300"
+                            : "bg-white hover:bg-gray-50"
+                        }`}
+                        onClick={() => handleCallTypeChange(phoneCallType === "outbound" ? "both" : "inbound")}
+                      >
+                        <div className="font-medium">接收来电</div>
+                        <div className="text-sm text-gray-500">接听客户的来电</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 添加标签功能 */}
+                  <div className="mt-6">
+                    <Label className="text-base mb-2 block">通话标签（可多选）</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {phoneCallTags.map((tag) => (
+                        <div
+                          key={tag.id}
+                          className={`px-3 py-1.5 rounded-full text-sm cursor-pointer ${
+                            selectedPhoneTags.includes(tag.id)
+                              ? tag.color
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                          }`}
+                          onClick={() => handleTagToggle(tag.id)}
+                        >
+                          {tag.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
 
               {scenarios.find((s) => s.id === formData.scenario)?.type === "material" && (
@@ -518,6 +808,85 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
                     </div>
                   )}
                 </div>
+              )}
+              {formData.scenario === "weixinqun" && (
+                <>
+                  <div>
+                    <Label>群管理设置</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">自动欢迎新成员</div>
+                          <div className="text-sm text-gray-500">新成员入群时自动发送欢迎消息</div>
+                        </div>
+                        <Switch
+                          checked={formData.autoWelcome ?? true}
+                          onCheckedChange={(checked) => onChange({ ...formData, autoWelcome: checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">群活跃度监控</div>
+                          <div className="text-sm text-gray-500">监控群聊活跃度并自动互动</div>
+                        </div>
+                        <Switch
+                          checked={formData.activityMonitor ?? false}
+                          onCheckedChange={(checked) => onChange({ ...formData, activityMonitor: checked })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>每日推送数量</Label>
+                    <div className="flex items-center space-x-4 mt-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onChange({ ...formData, syncCount: Math.max(1, (formData.syncCount || 3) - 1) })}
+                        className="bg-white border-gray-200"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center">{formData.syncCount || 3}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onChange({ ...formData, syncCount: (formData.syncCount || 3) + 1 })}
+                        className="bg-white border-gray-200"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <span className="text-gray-500">条内容到群</span>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">建议每日推送3-5条内容，避免过度打扰群成员</div>
+                  </div>
+
+                  <div>
+                    <Label>推送时间设置</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {["上午 9:00-12:00", "下午 14:00-17:00", "晚上 19:00-21:00"].map((time, index) => (
+                        <div
+                          key={index}
+                          className={`p-2 border rounded-lg text-center cursor-pointer text-sm ${
+                            (formData.pushTimes || []).includes(index)
+                              ? "bg-blue-50 border-blue-300 text-blue-700"
+                              : "bg-white hover:bg-gray-50"
+                          }`}
+                          onClick={() => {
+                            const currentTimes = formData.pushTimes || []
+                            const newTimes = currentTimes.includes(index)
+                              ? currentTimes.filter((t: number) => t !== index)
+                              : [...currentTimes, index]
+                            onChange({ ...formData, pushTimes: newTimes })
+                          }}
+                        >
+                          {time}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -710,4 +1079,3 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
     </TooltipProvider>
   )
 }
-

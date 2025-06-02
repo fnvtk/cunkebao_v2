@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, Copy, Link, HelpCircle } from "lucide-react"
+import { Copy, Link, HelpCircle, Shield, ChevronLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { toast } from "@/components/ui/use-toast"
@@ -196,39 +196,53 @@ export default function ChannelPage({ params }: { params: { channel: string } })
     })
   }
 
+  const handleCreateNewPlan = () => {
+    router.push(`/plans/new?type=${channel}`)
+  }
+
   return (
     <div className="flex-1 bg-gradient-to-b from-blue-50 to-white min-h-screen">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
-        <div className="flex items-center p-4">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/scenarios")} className="h-8 w-8">
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-semibold text-blue-600">{channelName}获客</h1>
           </div>
+          <Button onClick={handleCreateNewPlan} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Plus className="h-4 w-4 mr-1" />
+            新建{channelName}计划
+          </Button>
         </div>
       </header>
 
-      <div className="p-4 max-w-7xl mx-auto">
-        {tasks.length > 0 ? (
-          tasks.map((task) => (
-            <div key={task.id} className="mb-6">
-              <ScenarioAcquisitionCard
-                task={task}
-                channel={channel}
-                onEdit={() => handleEditPlan(task.id)}
-                onCopy={handleCopyPlan}
-                onDelete={handleDeletePlan}
-                onStatusChange={handleStatusChange}
-                onOpenSettings={handleOpenApiSettings}
-              />
+      <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="space-y-4">
+          {tasks.length > 0 ? (
+            tasks.map((task) => (
+              <div key={task.id}>
+                <ScenarioAcquisitionCard
+                  task={task}
+                  channel={channel}
+                  onEdit={() => handleEditPlan(task.id)}
+                  onCopy={handleCopyPlan}
+                  onDelete={handleDeletePlan}
+                  onStatusChange={handleStatusChange}
+                  onOpenSettings={handleOpenApiSettings}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg shadow-sm md:col-span-2 lg:col-span-3">
+              <div className="text-gray-400 mb-4">暂无获客计划</div>
+              <Button onClick={handleCreateNewPlan} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="h-4 w-4 mr-1" />
+                新建{channelName}计划
+              </Button>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <div className="text-gray-400 mb-4">暂无获客计划</div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       {/* API接口设置对话框 */}
       <Dialog open={showApiDialog} onOpenChange={setShowApiDialog}>
@@ -241,81 +255,163 @@ export default function ChannelPage({ params }: { params: { channel: string } })
             <DialogDescription>使用此接口直接导入客资到该获客计划，支持多种编程语言。</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
+            {/* API密钥部分 */}
             <div className="space-y-2">
-              <Label htmlFor="api-key">API密钥</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="api-key" className="text-sm font-medium flex items-center gap-1">
+                  API密钥
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">API密钥用于身份验证，请妥善保管，不要在客户端代码中暴露它</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Label>
+                <span className="text-xs text-gray-500">用于接口身份验证</span>
+              </div>
               <div className="flex items-center space-x-2">
-                <Input id="api-key" value={currentApiSettings.apiKey} readOnly className="flex-1" />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    navigator.clipboard.writeText(currentApiSettings.apiKey)
-                    toast({
-                      title: "已复制",
-                      description: "API密钥已复制到剪贴板",
-                      variant: "success",
-                    })
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <div className="relative flex-1">
+                  <Input
+                    id="api-key"
+                    value={currentApiSettings.apiKey}
+                    readOnly
+                    className="pr-10 font-mono text-sm bg-gray-50"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentApiSettings.apiKey)
+                      toast({
+                        title: "已复制",
+                        description: "API密钥已复制到剪贴板",
+                        variant: "success",
+                      })
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
+            {/* 接口地址部分 */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="webhook-url">接口地址</Label>
+                <Label htmlFor="webhook-url" className="text-sm font-medium">
+                  接口地址
+                </Label>
                 <button
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                   onClick={() => handleCopyApiUrl(currentApiSettings.webhookUrl, true)}
                 >
+                  <Copy className="h-3 w-3" />
                   复制（含示例参数）
                 </button>
               </div>
               <div className="flex items-center space-x-2">
-                <Input id="webhook-url" value={currentApiSettings.webhookUrl} readOnly className="flex-1" />
-                <Button variant="outline" size="icon" onClick={() => handleCopyApiUrl(currentApiSettings.webhookUrl)}>
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <div className="relative flex-1">
+                  <Input
+                    id="webhook-url"
+                    value={currentApiSettings.webhookUrl}
+                    readOnly
+                    className="pr-10 font-mono text-sm bg-gray-50 text-gray-700"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full"
+                    onClick={() => handleCopyApiUrl(currentApiSettings.webhookUrl)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-gray-500">支持GET/POST请求，必要参数：name（姓名）、phone（电话）</p>
+              <div className="bg-blue-50 p-2 rounded-md">
+                <p className="text-xs text-blue-700">
+                  <span className="font-medium">必要参数：</span>name（姓名）、phone（电话）
+                  <br />
+                  <span className="font-medium">可选参数：</span>source（来源）、remark（备注）、tags（标签）
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>接口文档</Label>
+            {/* 接口文档部分 */}
+            <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <Button
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => {
-                    window.open(`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}`, "_blank")
-                  }}
-                >
-                  <Link className="h-4 w-4" />
-                  查看详细接口文档与集成指南
-                </Button>
+                <Label className="text-sm font-medium">接口文档</Label>
               </div>
-              <p className="text-xs text-gray-500 text-center">
-                <a
-                  href={`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}#examples`}
-                  target="_blank"
-                  className="text-blue-600 hover:underline"
-                  rel="noreferrer"
-                >
-                  查看Python、Java等多语言示例代码
-                </a>
-              </p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div className="flex flex-col space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 bg-white"
+                    onClick={() => {
+                      window.open(`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}`, "_blank")
+                    }}
+                  >
+                    <Link className="h-4 w-4" />
+                    查看详细接口文档与集成指南
+                  </Button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        window.open(`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}#examples`, "_blank")
+                      }}
+                    >
+                      <span className="text-blue-600">查看代码示例</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        window.open(`/api/docs/scenarios/${channel}/${currentApiSettings.taskId}#integration`, "_blank")
+                      }}
+                    >
+                      <span className="text-blue-600">查看集成指南</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 快速测试部分 */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">快速测试</Label>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
+                <p className="text-xs text-gray-600 mb-2">使用以下URL可以快速测试接口是否正常工作：</p>
+                <div className="text-xs font-mono bg-white p-2 rounded border border-gray-200 overflow-x-auto">
+                  {`${currentApiSettings.webhookUrl}?name=测试客户&phone=13800138000`}
+                </div>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApiDialog(false)}>
-              关闭
-            </Button>
+          <DialogFooter className="flex justify-between items-center">
+            <div className="text-xs text-gray-500">
+              <span className="inline-flex items-center">
+                <Shield className="h-3 w-3 mr-1" />
+                接口安全加密传输
+              </span>
+            </div>
+            <Button onClick={() => setShowApiDialog(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
-

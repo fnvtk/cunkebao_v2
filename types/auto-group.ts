@@ -38,4 +38,3 @@ export interface WechatAccount {
   avatar: string
   status: "online" | "offline"
 }
-

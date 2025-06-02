@@ -177,4 +177,3 @@ export function ConfirmAnalysis({ formData, updateFormData, onSubmit, onBack }: 
     </div>
   )
 }
-

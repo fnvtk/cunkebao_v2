@@ -232,4 +232,3 @@ export function ConfirmStrategy({ formData, updateFormData, onSubmit, onBack }: 
     </div>
   )
 }
-

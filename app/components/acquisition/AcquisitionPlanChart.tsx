@@ -96,4 +96,3 @@ export function AcquisitionPlanChart({ data }: AcquisitionPlanChartProps) {
     </div>
   )
 }
-

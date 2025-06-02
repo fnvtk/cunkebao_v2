@@ -1,36 +1,55 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, Users, User, Briefcase } from "lucide-react"
-
-const navItems = [
-  { href: "/", icon: Home, label: "首页" },
-  { href: "/scenarios", icon: Users, label: "场景获客" },
-  { href: "/workspace", icon: Briefcase, label: "工作台" },
-  { href: "/profile", icon: User, label: "我的" },
-]
+import { usePathname, useRouter } from "next/navigation"
+import { Home, Users, LayoutGrid, User } from "lucide-react"
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const navItems = [
+    {
+      name: "首页",
+      href: "/",
+      icon: Home,
+      active: pathname === "/",
+    },
+    {
+      name: "场景获客",
+      href: "/scenarios",
+      icon: Users,
+      active: pathname.startsWith("/scenarios"),
+    },
+    {
+      name: "工作台",
+      href: "/workspace",
+      icon: LayoutGrid,
+      active: pathname.startsWith("/workspace"),
+    },
+    {
+      name: "我的",
+      href: "/profile",
+      icon: User,
+      active: pathname.startsWith("/profile"),
+    },
+  ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-      <div className="max-w-md mx-auto flex justify-around">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-pb">
+      <div className="flex justify-around items-center h-16 max-w-md mx-auto">
         {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center py-2 px-3 ${
-              pathname === item.href ? "text-blue-500" : "text-gray-500"
+          <button
+            key={item.name}
+            onClick={() => router.push(item.href)}
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+              item.active ? "text-blue-500" : "text-gray-500 hover:text-gray-900"
             }`}
           >
-            <item.icon className="w-6 h-6" />
-            <span className="text-xs mt-1">{item.label}</span>
-          </Link>
+            <item.icon className="w-5 h-5" />
+            <span className="text-xs mt-1">{item.name}</span>
+          </button>
         ))}
       </div>
-    </nav>
+    </div>
   )
 }
-

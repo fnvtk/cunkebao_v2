@@ -37,4 +37,3 @@ export interface GroupPushTask {
   createdAt: string
   updatedAt: string
 }
-

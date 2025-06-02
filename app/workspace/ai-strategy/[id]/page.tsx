@@ -341,4 +341,3 @@ export default function StrategyReportPage({ params }: { params: { id: string } 
     </div>
   )
 }
-

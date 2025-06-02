@@ -182,4 +182,3 @@ export default function MaterialsPage({ params }: { params: { id: string } }) {
     </div>
   )
 }
-

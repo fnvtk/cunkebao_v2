@@ -52,4 +52,3 @@ export function Step({ title, description, icon, status = "wait", className, ...
     </div>
   )
 }
-

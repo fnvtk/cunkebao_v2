@@ -33,4 +33,3 @@ export interface ContentLibrary {
     avatar?: string
   }[]
 }
-

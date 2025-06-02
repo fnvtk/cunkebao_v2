@@ -128,4 +128,3 @@ export default function NewMaterialPage({ params }: { params: { id: string } }) 
     </div>
   )
 }
-

@@ -9,4 +9,3 @@ export function AppleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default AppleIcon
-

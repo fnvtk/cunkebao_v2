@@ -37,4 +37,3 @@ export function ChatMessage({ content, isUser, timestamp, avatar }: ChatMessageP
     </div>
   )
 }
-

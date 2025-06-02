@@ -227,4 +227,3 @@ export function MessageEditor({ onMessageChange, defaultValues }: MessageEditorP
     </div>
   )
 }
-

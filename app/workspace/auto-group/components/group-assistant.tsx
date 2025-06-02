@@ -124,4 +124,3 @@ export function GroupAssistant({ open, onOpenChange, onCreateGroup }: GroupAssis
     </Dialog>
   )
 }
-

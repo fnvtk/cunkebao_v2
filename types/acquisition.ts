@@ -26,4 +26,3 @@ export interface OrderFormData {
   orderDate: string
   remark: string
 }
-

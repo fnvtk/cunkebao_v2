@@ -124,4 +124,3 @@ export function GroupCreationProgress({ planId, onComplete }: GroupCreationProgr
     </div>
   )
 }
-

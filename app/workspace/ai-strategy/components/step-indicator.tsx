@@ -55,4 +55,3 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
     </div>
   )
 }
-

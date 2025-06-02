@@ -282,4 +282,3 @@ export function NewPlanForm({ onClose }: NewPlanFormProps) {
     </DialogContent>
   )
 }
-

@@ -319,4 +319,3 @@ export function StrategySelection({ formData, updateFormData, onNext, onBack }: 
     </div>
   )
 }
-

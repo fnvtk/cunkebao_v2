@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Info, Plus, Minus, User, Users, X, Search } from "lucide-react"
+import { AlertCircle, Info, Plus, Minus, User, Users, X, Search, Loader2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
@@ -16,8 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useMobile } from "@/hooks/use-mobile"
 
-interface WechatFriend {
+interface WechatAccount {
   id: string
   nickname: string
   wechatId: string
@@ -25,8 +26,47 @@ interface WechatFriend {
   tags: string[]
 }
 
+// 模拟从"我的"页面获取微信账号列表
+const mockWechatAccounts: WechatAccount[] = [
+  {
+    id: "account-1",
+    nickname: "微信号1",
+    wechatId: "wxid_abc123",
+    avatar: "/placeholder.svg?height=40&width=40&text=1",
+    tags: ["主要账号", "活跃"],
+  },
+  {
+    id: "account-2",
+    nickname: "微信号2",
+    wechatId: "wxid_def456",
+    avatar: "/placeholder.svg?height=40&width=40&text=2",
+    tags: ["主要账号", "业务"],
+  },
+  {
+    id: "account-3",
+    nickname: "微信号3",
+    wechatId: "wxid_ghi789",
+    avatar: "/placeholder.svg?height=40&width=40&text=3",
+    tags: ["备用账号"],
+  },
+  {
+    id: "account-4",
+    nickname: "微信号4",
+    wechatId: "wxid_jkl012",
+    avatar: "/placeholder.svg?height=40&width=40&text=4",
+    tags: ["新账号"],
+  },
+  {
+    id: "account-5",
+    nickname: "微信号5",
+    wechatId: "wxid_mno345",
+    avatar: "/placeholder.svg?height=40&width=40&text=5",
+    tags: ["测试账号"],
+  },
+]
+
 interface GroupSettingsProps {
-  onNext: () => void
+  onNextStep?: () => void // 修改为可选参数
   initialValues?: {
     name: string
     fixedWechatIds: string[]
@@ -41,7 +81,8 @@ interface GroupSettingsProps {
   }) => void
 }
 
-export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSettingsProps) {
+export function GroupSettings({ onNextStep, initialValues, onValuesChange }: GroupSettingsProps) {
+  const isMobile = useMobile()
   const [name, setName] = useState(initialValues?.name || "新建群计划")
   const [fixedWechatIds, setFixedWechatIds] = useState<string[]>(initialValues?.fixedWechatIds || [])
   const [newWechatId, setNewWechatId] = useState("")
@@ -51,9 +92,10 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
   const [warning, setWarning] = useState<string | null>(null)
   const [friendSelectorOpen, setFriendSelectorOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [friends, setFriends] = useState<WechatFriend[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedFriends, setSelectedFriends] = useState<WechatFriend[]>([])
+  const [wechatAccounts, setWechatAccounts] = useState<WechatAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedFriends, setSelectedFriends] = useState<WechatAccount[]>([])
+  const [autoAddingAccounts, setAutoAddingAccounts] = useState(false)
 
   // 微信群人数固定为38人
   const GROUP_SIZE = 38
@@ -62,11 +104,40 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
   // 最多可选择的微信号数量
   const MAX_WECHAT_IDS = 5
 
-  // 只在组件挂载时执行一次初始验证
+  // 组件挂载时获取微信账号并自动选择前三个
   useEffect(() => {
-    validateSettings()
-    fetchFriends()
-  }, [])
+    const fetchWechatAccounts = async () => {
+      setLoading(true)
+      try {
+        // 模拟API调用延迟
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // 实际项目中应该从API获取微信账号列表
+        // const response = await fetch('/api/wechat-accounts');
+        // const data = await response.json();
+        // setWechatAccounts(data);
+
+        // 使用模拟数据
+        setWechatAccounts(mockWechatAccounts)
+
+        // 自动选择前三个微信账号
+        const defaultAccounts = mockWechatAccounts.slice(0, 3)
+        const defaultWechatIds = defaultAccounts.map((account) => account.wechatId)
+
+        // 如果没有初始值或初始值为空，则使用默认选择
+        if (!initialValues?.fixedWechatIds || initialValues.fixedWechatIds.length === 0) {
+          setFixedWechatIds(defaultWechatIds)
+        }
+      } catch (error) {
+        console.error("获取微信账号失败:", error)
+        setError("获取微信账号失败，请稍后重试")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWechatAccounts()
+  }, [initialValues?.fixedWechatIds])
 
   // 当值变化时，通知父组件
   useEffect(() => {
@@ -82,20 +153,39 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
     return () => clearTimeout(timer)
   }, [name, fixedWechatIds, groupingOption, fixedGroupCount, onValuesChange])
 
-  const fetchFriends = async () => {
-    setLoading(true)
-    // 模拟从API获取好友列表
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    const mockFriends = Array.from({ length: 20 }, (_, i) => ({
-      id: `friend-${i}`,
-      nickname: `好友${i + 1}`,
-      wechatId: `wxid_${Math.random().toString(36).substring(2, 8)}`,
-      avatar: `/placeholder.svg?height=40&width=40&text=${i + 1}`,
-      tags: i % 3 === 0 ? ["重要客户"] : i % 3 === 1 ? ["潜在客户", "已沟通"] : ["新客户"],
-    }))
-    setFriends(mockFriends)
-    setLoading(false)
-  }
+  // 验证设置
+  useEffect(() => {
+    validateSettings()
+  }, [name, fixedWechatIds, groupingOption, fixedGroupCount])
+
+  // 模拟自动添加缺失的微信账号
+  useEffect(() => {
+    // 检查是否需要自动添加微信账号
+    const checkAndAddMissingAccounts = async () => {
+      // 获取默认应该选择的前三个微信账号ID
+      const defaultAccountIds = mockWechatAccounts.slice(0, 3).map((acc) => acc.wechatId)
+
+      // 检查是否有缺失的账号
+      const missingAccountIds = defaultAccountIds.filter((id) => !fixedWechatIds.includes(id))
+
+      if (missingAccountIds.length > 0) {
+        setAutoAddingAccounts(true)
+        setWarning(`正在自动添加 ${missingAccountIds.length} 个缺失的微信账号...`)
+
+        // 模拟添加过程
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+
+        // 添加缺失的账号
+        setFixedWechatIds((prev) => [...prev, ...missingAccountIds])
+        setWarning(null)
+        setAutoAddingAccounts(false)
+      }
+    }
+
+    if (!loading && fixedWechatIds.length < 3) {
+      checkAndAddMissingAccounts()
+    }
+  }, [loading, fixedWechatIds])
 
   const validateSettings = () => {
     setError(null)
@@ -126,8 +216,8 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
   }
 
   const handleNext = () => {
-    if (validateSettings()) {
-      onNext()
+    if (validateSettings() && onNextStep) {
+      onNextStep()
     }
   }
 
@@ -201,7 +291,7 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
     setSelectedFriends([])
   }
 
-  const toggleFriendSelection = (friend: WechatFriend) => {
+  const toggleFriendSelection = (friend: WechatAccount) => {
     setSelectedFriends((prev) => {
       const isSelected = prev.some((f) => f.id === friend.id)
       if (isSelected) {
@@ -212,10 +302,10 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
     })
   }
 
-  const filteredFriends = friends.filter(
-    (friend) =>
-      friend.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      friend.wechatId.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredAccounts = wechatAccounts.filter(
+    (account) =>
+      account.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      account.wechatId.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   // 计算总人数
@@ -244,67 +334,78 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>这些微信号将被添加到每个群中</p>
-                        <p>如不在好友列表中，系统将先添加为好友</p>
+                        <p>系统默认选择前三个微信号</p>
+                        <p>如不在好友列表中，系统将自动添加为好友</p>
                         <p>最多可添加5个微信号</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </Label>
 
-                <div className="flex space-x-2">
-                  <div className="relative flex-1">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      value={newWechatId}
-                      onChange={handleNewWechatIdChange}
-                      placeholder="请输入微信号"
-                      className="pl-9"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          addWechatId()
-                        }
-                      }}
-                    />
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-500 mr-2" />
+                    <span>正在加载微信账号...</span>
                   </div>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={addWechatId}
-                    disabled={!newWechatId.trim() || fixedWechatIds.length >= MAX_WECHAT_IDS}
-                  >
-                    添加
-                  </Button>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={openFriendSelector}
-                    disabled={fixedWechatIds.length >= MAX_WECHAT_IDS}
-                  >
-                    选择好友
-                  </Button>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {fixedWechatIds.map((id) => {
+                        const account = wechatAccounts.find((acc) => acc.wechatId === id)
+                        return (
+                          <Badge key={id} variant="secondary" className="px-3 py-1">
+                            {account ? account.nickname : id}
+                            <button
+                              type="button"
+                              className="ml-2 text-gray-500 hover:text-gray-700"
+                              onClick={() => removeWechatId(id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        )
+                      })}
+                    </div>
 
-                {fixedWechatIds.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {fixedWechatIds.map((id) => (
-                      <Badge key={id} variant="secondary" className="px-3 py-1">
-                        {id}
-                        <button
-                          type="button"
-                          className="ml-2 text-gray-500 hover:text-gray-700"
-                          onClick={() => removeWechatId(id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+                    <div className="flex space-x-2 mt-3">
+                      <div className="relative flex-1">
+                        <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                          value={newWechatId}
+                          onChange={handleNewWechatIdChange}
+                          placeholder="请输入微信号"
+                          className="pl-9"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              addWechatId()
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={addWechatId}
+                        disabled={!newWechatId.trim() || fixedWechatIds.length >= MAX_WECHAT_IDS}
+                      >
+                        添加
+                      </Button>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={openFriendSelector}
+                        disabled={fixedWechatIds.length >= MAX_WECHAT_IDS}
+                      >
+                        选择微信号
+                      </Button>
+                    </div>
+
+                    <div className="text-xs text-gray-500 mt-1">
+                      已添加 {fixedWechatIds.length}/{MAX_WECHAT_IDS} 个微信号
+                    </div>
+                  </>
                 )}
-
-                <div className="text-xs text-gray-500 mt-1">
-                  已添加 {fixedWechatIds.length}/{MAX_WECHAT_IDS} 个微信号
-                </div>
               </div>
 
               <div className="space-y-2 pt-2">
@@ -329,7 +430,7 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
                         <p className="text-sm text-gray-500 mb-2">手动指定需要创建的群数量</p>
 
                         {groupingOption === "fixed" && (
-                          <div className="flex items-center space-x-2 mt-2">
+                          <div className={`flex ${isMobile ? "flex-col space-y-2" : "items-center space-x-2"} mt-2`}>
                             <Label htmlFor="groupCount" className="whitespace-nowrap">
                               计划创建群组数:
                             </Label>
@@ -380,6 +481,13 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
               </div>
             </div>
 
+            {autoAddingAccounts && (
+              <Alert className="bg-blue-50 border-blue-200">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600 mr-2" />
+                <AlertDescription className="text-blue-700">正在自动添加默认微信号，请稍候...</AlertDescription>
+              </Alert>
+            )}
+
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -387,7 +495,7 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
               </Alert>
             )}
 
-            {warning && (
+            {warning && !autoAddingAccounts && (
               <Alert variant="warning" className="bg-yellow-50 border-yellow-200 text-yellow-800">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{warning}</AlertDescription>
@@ -401,7 +509,7 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
         <Button
           onClick={handleNext}
           className="bg-blue-500 hover:bg-blue-600"
-          disabled={fixedWechatIds.length === 0 || !!error}
+          disabled={fixedWechatIds.length === 0 || !!error || loading || autoAddingAccounts}
         >
           下一步
         </Button>
@@ -410,12 +518,12 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
       <Dialog open={friendSelectorOpen} onOpenChange={setFriendSelectorOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>选择微信好友</DialogTitle>
+            <DialogTitle>选择微信账号</DialogTitle>
           </DialogHeader>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="搜索好友"
+              placeholder="搜索微信账号"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -425,29 +533,29 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
             <div className="space-y-2">
               {loading ? (
                 <div className="text-center py-4">加载中...</div>
-              ) : filteredFriends.length === 0 ? (
-                <div className="text-center py-4">未找到匹配的好友</div>
+              ) : filteredAccounts.length === 0 ? (
+                <div className="text-center py-4">未找到匹配的微信账号</div>
               ) : (
-                filteredFriends.map((friend) => (
+                filteredAccounts.map((account) => (
                   <div
-                    key={friend.id}
+                    key={account.id}
                     className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
-                    onClick={() => toggleFriendSelection(friend)}
+                    onClick={() => toggleFriendSelection(account)}
                   >
                     <Checkbox
-                      checked={selectedFriends.some((f) => f.id === friend.id)}
-                      onCheckedChange={() => toggleFriendSelection(friend)}
+                      checked={selectedFriends.some((f) => f.id === account.id)}
+                      onCheckedChange={() => toggleFriendSelection(account)}
                     />
                     <Avatar>
-                      <AvatarImage src={friend.avatar} />
-                      <AvatarFallback>{friend.nickname[0]}</AvatarFallback>
+                      <AvatarImage src={account.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{account.nickname[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="font-medium">{friend.nickname}</div>
-                      <div className="text-sm text-gray-500">{friend.wechatId}</div>
+                      <div className="font-medium">{account.nickname}</div>
+                      <div className="text-sm text-gray-500">{account.wechatId}</div>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {friend.tags.map((tag) => (
+                      {account.tags.map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">
                           {tag}
                         </Badge>
@@ -471,4 +579,3 @@ export function GroupSettings({ onNext, initialValues, onValuesChange }: GroupSe
     </div>
   )
 }
-

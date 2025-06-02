@@ -102,4 +102,3 @@ export function DeviceGrid({ devices, selectable, selectedDevices, onSelect, dev
     </div>
   )
 }
-

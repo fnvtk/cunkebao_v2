@@ -287,4 +287,3 @@ export default function ContentLibraryPage({ params }: { params: { id: string } 
     </div>
   )
 }
-

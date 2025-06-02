@@ -275,4 +275,3 @@ export function FriendRequestSettings({ formData, onChange, onNext, onPrev }: Fr
     </Card>
   )
 }
-

@@ -42,6 +42,16 @@ export default function ApiDocPage({ params }: { params: { channel: string; id: 
             </Button>
             <h1 className="ml-2 text-lg font-medium">{apiGuide.title}</h1>
           </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => window.open(`${window.location.origin}/scenarios/${params.channel}`, "_self")}
+            >
+              返回计划列表
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -133,7 +143,7 @@ export default function ApiDocPage({ params }: { params: { channel: string; id: 
           ))}
         </Accordion>
 
-        <Card>
+        <Card id="examples">
           <CardHeader>
             <CardTitle>代码示例</CardTitle>
             <CardDescription>以下是不同编程语言的接口调用示例</CardDescription>
@@ -171,7 +181,7 @@ export default function ApiDocPage({ params }: { params: { channel: string; id: 
           </CardContent>
         </Card>
 
-        <div className="mt-8">
+        <div className="mt-8" id="integration">
           <h3 className="text-lg font-medium mb-4">集成指南</h3>
 
           <Card className="mb-4">
@@ -187,7 +197,7 @@ export default function ApiDocPage({ params }: { params: { channel: string; id: 
                 <li>
                   设置接口URL为：
                   <code className="bg-gray-100 px-1 py-0.5 rounded">
-                    &lt;code&gt;{apiGuide.endpoints[0].url}&lt;/code&gt;
+                    <code>{apiGuide.endpoints[0].url}</code>
                   </code>
                 </li>
                 <li>映射必要字段（name, phone等）</li>
@@ -228,4 +238,3 @@ export default function ApiDocPage({ params }: { params: { channel: string; id: 
     </div>
   )
 }
-

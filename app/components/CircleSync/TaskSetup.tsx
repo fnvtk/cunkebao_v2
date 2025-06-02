@@ -98,4 +98,3 @@ export function TaskSetup({ onNext, onPrev, step }: TaskSetupProps) {
     </Card>
   )
 }
-

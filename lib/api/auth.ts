@@ -1,69 +1,118 @@
-// API请求工具函数
-import { toast } from "@/components/ui/use-toast"
+// 定义登录响应类型
+export interface LoginResponse {
+  code: number
+  message: string
+  data?: {
+    token: string
+    user?: {
+      id: string
+      username: string
+      phone: string
+      avatar?: string
+      role: string
+    }
+  }
+}
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://dev.ngrok.zbq365.com"
+// 定义验证码响应类型
+export interface CodeResponse {
+  code: number
+  message: string
+  data?: {
+    expireTime: number // 验证码过期时间（秒）
+  }
+}
 
-// 带有认证的请求函数
-export async function authFetch(url: string, options: RequestInit = {}) {
+// 登录参数类型
+export interface LoginParams {
+  phone: string
+  loginType: "password" | "code"
+  password?: string
+  verificationCode?: string
+}
+
+// 发送验证码参数类型
+export interface SendCodeParams {
+  phone: string
+  type: "login" | "register" | "reset"
+}
+
+// API基础URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.example.com"
+
+/**
+ * 用户登录
+ * @param params 登录参数
+ * @returns 登录响应
+ */
+export async function login(params: LoginParams): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  })
+
+  return await response.json()
+}
+
+/**
+ * 发送验证码
+ * @param params 发送验证码参数
+ * @returns 验证码响应
+ */
+export async function sendVerificationCode(params: SendCodeParams): Promise<CodeResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/send-code`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  })
+
+  return await response.json()
+}
+
+/**
+ * 退出登录
+ * @returns 退出登录响应
+ */
+export async function logout(): Promise<{ code: number; message: string }> {
   const token = localStorage.getItem("token")
 
-  // 合并headers
-  let headers = { ...options.headers }
+  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  })
 
-  // 如果有token，添加到请求头
-  if (token) {
-    headers = {
-      ...headers,
-      Token: `${token}`,
-    }
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      ...options,
-      headers,
-    })
-
-    const data = await response.json()
-
-    // 检查token是否过期（仅当有token时）
-    if (token && (data.code === 401 || data.code === 403)) {
-      // 清除token
-      localStorage.removeItem("token")
-
-      // 暂时不重定向到登录页
-      // if (typeof window !== "undefined") {
-      //   window.location.href = "/login"
-      // }
-
-      console.warn("登录已过期")
-    }
-
-    return data
-  } catch (error) {
-    console.error("API请求错误:", error)
-    toast({
-      variant: "destructive",
-      title: "请求失败",
-      description: error instanceof Error ? error.message : "网络错误，请稍后重试",
-    })
-    throw error
-  }
+  return await response.json()
 }
 
-// 不需要认证的请求函数
-export async function publicFetch(url: string, options: RequestInit = {}) {
-  try {
-    const response = await fetch(`${API_BASE_URL}${url}`, options)
-    return await response.json()
-  } catch (error) {
-    console.error("API请求错误:", error)
-    toast({
-      variant: "destructive",
-      title: "请求失败",
-      description: error instanceof Error ? error.message : "网络错误，请稍后重试",
-    })
-    throw error
-  }
+/**
+ * 检查登录状态
+ * @returns 是否已登录
+ */
+export function checkLoginStatus(): boolean {
+  const token = localStorage.getItem("token")
+  return !!token
 }
 
+/**
+ * 获取当前用户信息
+ * @returns 用户信息
+ */
+export function getCurrentUser() {
+  const userStr = localStorage.getItem("user")
+  if (!userStr) return null
+
+  try {
+    return JSON.parse(userStr)
+  } catch (e) {
+    console.error("解析用户信息失败", e)
+    return null
+  }
+}

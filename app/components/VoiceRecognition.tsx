@@ -60,4 +60,3 @@ export function VoiceRecognition({ onResult, onStop }: VoiceRecognitionProps) {
     </div>
   )
 }
-

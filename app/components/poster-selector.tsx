@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Check } from "lucide-react"
+import { Check, Plus } from "lucide-react"
 
 interface PosterTemplate {
   id: string
@@ -57,7 +57,7 @@ export function PosterSelector({ open, onOpenChange, onSelect }: PosterSelectorP
                   <img
                     src={template.imageUrl || "/placeholder.svg"}
                     alt={template.title}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 bg-black/50 group-hover:opacity-100 transition-opacity">
@@ -69,6 +69,15 @@ export function PosterSelector({ open, onOpenChange, onSelect }: PosterSelectorP
                 </div>
               </div>
             ))}
+            {/* 添加自定义海报按钮 */}
+            <div className="group relative cursor-pointer">
+              <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center text-gray-400">
+                  <Plus className="w-12 h-12" />
+                  <p className="mt-2 text-sm">上传自定义海报</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -82,4 +91,3 @@ export function PosterSelector({ open, onOpenChange, onSelect }: PosterSelectorP
     </Dialog>
   )
 }
-

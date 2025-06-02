@@ -251,3 +251,7 @@ export function DeviceSelector({
   )
 }
 
+// 添加 DeviceSelection 命名导出
+export function DeviceSelection({ onSelect, initialSelectedDevices = [] }: DeviceSelectorProps) {
+  return <DeviceSelector onSelect={onSelect} initialSelectedDevices={initialSelectedDevices} />
+}

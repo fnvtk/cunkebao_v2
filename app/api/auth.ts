@@ -66,4 +66,3 @@ export async function publicFetch(url: string, options: RequestInit = {}) {
     throw error
   }
 }
-

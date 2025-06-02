@@ -114,4 +114,3 @@ export function DeviceSelector({ selectedDevices, onChange }: DeviceSelectorProp
     </Card>
   )
 }
-

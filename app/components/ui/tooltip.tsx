@@ -74,7 +74,7 @@ const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
           <div
             ref={tooltipRef}
             className={cn(
-              "fixed z-50 px-2 py-1 text-xs text-primary-foreground bg-primary rounded-md shadow-sm scale-90 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+              "fixed z-50 px-2 py-1 text-xs text-primary-foreground bg-primary rounded-md shadow-sm scale-90 animate-in fade-in-0 zoom-in-95",
               className,
             )}
             style={{
@@ -105,4 +105,3 @@ export const TooltipContent = React.forwardRef<HTMLDivElement, React.HTMLAttribu
 TooltipContent.displayName = "TooltipContent"
 
 export { Tooltip }
-

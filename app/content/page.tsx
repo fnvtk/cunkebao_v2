@@ -10,6 +10,15 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { toast } from "@/components/ui/use-toast"
 
 interface ContentLibrary {
   id: string
@@ -20,7 +29,6 @@ interface ContentLibrary {
     nickname: string
     avatar: string
   }[]
-  creator: string
   itemCount: number
   lastUpdated: string
   enabled: boolean
@@ -38,7 +46,6 @@ export default function ContentLibraryPage() {
         { id: "2", nickname: "李四", avatar: "/placeholder.svg?height=40&width=40" },
         { id: "3", nickname: "王五", avatar: "/placeholder.svg?height=40&width=40" },
       ],
-      creator: "海尼",
       itemCount: 0,
       lastUpdated: "2024-02-09 12:30",
       enabled: false,
@@ -48,7 +55,6 @@ export default function ContentLibraryPage() {
       name: "开发群",
       source: "groups",
       targetAudience: [{ id: "4", nickname: "开发群1", avatar: "/placeholder.svg?height=40&width=40" }],
-      creator: "karuo",
       itemCount: 0,
       lastUpdated: "2024-02-09 12:30",
       enabled: true,
@@ -57,22 +63,12 @@ export default function ContentLibraryPage() {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
+  const [viewLibraryId, setViewLibraryId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [libraryToDelete, setLibraryToDelete] = useState<string | null>(null)
 
   const handleCreateNew = () => {
-    // 模拟创建新内容库
-    const newId = Date.now().toString()
-    const newLibrary = {
-      id: newId,
-      name: "新内容库",
-      source: "friends" as const,
-      targetAudience: [],
-      creator: "当前用户",
-      itemCount: 0,
-      lastUpdated: new Date().toISOString(),
-      enabled: true,
-    }
-    setLibraries([newLibrary, ...libraries])
-    router.push(`/content/${newId}`)
+    router.push(`/content/new`)
   }
 
   const handleEdit = (id: string) => {
@@ -80,12 +76,28 @@ export default function ContentLibraryPage() {
   }
 
   const handleDelete = (id: string) => {
-    // 实现删除功能
-    setLibraries(libraries.filter((lib) => lib.id !== id))
+    setLibraryToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (libraryToDelete) {
+      setLibraries(libraries.filter((lib) => lib.id !== libraryToDelete))
+      toast({
+        title: "删除成功",
+        description: "内容库已成功删除",
+      })
+    }
+    setDeleteDialogOpen(false)
+    setLibraryToDelete(null)
   }
 
   const handleViewMaterials = (id: string) => {
     router.push(`/content/${id}/materials`)
+  }
+
+  const handleViewLibrary = (id: string) => {
+    setViewLibraryId(id)
   }
 
   const filteredLibraries = libraries.filter(
@@ -94,6 +106,9 @@ export default function ContentLibraryPage() {
       (library.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         library.targetAudience.some((target) => target.nickname.toLowerCase().includes(searchQuery.toLowerCase()))),
   )
+
+  // 查找当前查看的内容库
+  const viewingLibrary = viewLibraryId ? libraries.find((lib) => lib.id === viewLibraryId) : null
 
   return (
     <div className="flex-1 bg-gray-50 min-h-screen">
@@ -173,7 +188,6 @@ export default function ContentLibraryPage() {
                             )}
                           </div>
                         </div>
-                        <div>创建人：{library.creator}</div>
                         <div>内容数量：{library.itemCount}</div>
                         <div>更新时间：{library.lastUpdated}</div>
                       </div>
@@ -186,6 +200,10 @@ export default function ContentLibraryPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewLibrary(library.id)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            查看
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(library.id)}>
                             <Edit className="h-4 w-4 mr-2" />
                             编辑
@@ -204,11 +222,94 @@ export default function ContentLibraryPage() {
                   </div>
                 </Card>
               ))}
+
+              {filteredLibraries.length === 0 && (
+                <div className="text-center py-8 text-gray-500">未找到匹配的内容库</div>
+              )}
             </div>
           </div>
         </Card>
       </div>
+
+      {/* 查看内容库详情对话框 */}
+      <Dialog open={!!viewLibraryId} onOpenChange={(open) => !open && setViewLibraryId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>内容库详情</DialogTitle>
+          </DialogHeader>
+          {viewingLibrary && (
+            <div className="space-y-4 py-4">
+              <div>
+                <h3 className="font-medium text-lg">{viewingLibrary.name}</h3>
+                <Badge variant={viewingLibrary.enabled ? "success" : "secondary"} className="mt-2">
+                  {viewingLibrary.enabled ? "已启用" : "已停用"}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm text-gray-700 font-medium">来源</div>
+                <div className="flex flex-wrap gap-2">
+                  {viewingLibrary.targetAudience.map((target) => (
+                    <div key={target.id} className="flex items-center space-x-2 bg-gray-100 p-2 rounded-md">
+                      <Image
+                        src={target.avatar || "/placeholder.svg"}
+                        alt={target.nickname}
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                      <span>{target.nickname}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-700 font-medium">内容数量</div>
+                  <div>{viewingLibrary.itemCount}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-700 font-medium">更新时间</div>
+                  <div>{viewingLibrary.lastUpdated}</div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setViewLibraryId(null)}>
+                  关闭
+                </Button>
+                <Button
+                  onClick={() => {
+                    setViewLibraryId(null)
+                    handleEdit(viewingLibrary.id)
+                  }}
+                >
+                  编辑
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>您确定要删除此内容库吗？此操作无法撤销，所有相关内容将被永久删除。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              取消
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

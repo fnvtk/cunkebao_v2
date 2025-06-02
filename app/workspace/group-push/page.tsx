@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { PlusCircle, MoreVertical, Edit, Trash2, ArrowLeft, Clock, Search, Filter, RefreshCw } from "lucide-react"
+import { PlusCircle, MoreVertical, Edit, Trash2, ArrowLeft, Clock, Search, RefreshCw } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 
@@ -124,9 +124,6 @@ export default function GroupPushPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
             <Button variant="outline" size="icon">
               <RefreshCw className="h-4 w-4" />
             </Button>
@@ -252,4 +249,3 @@ export default function GroupPushPage() {
     </div>
   )
 }
-

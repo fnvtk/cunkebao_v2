@@ -115,4 +115,3 @@ export function WechatFriendSelector({ open, onOpenChange, selectedFriends, onSe
     </Dialog>
   )
 }
-

@@ -10,4 +10,3 @@ export function WeChatIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default WeChatIcon
-

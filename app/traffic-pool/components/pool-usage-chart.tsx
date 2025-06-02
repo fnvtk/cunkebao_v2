@@ -30,4 +30,3 @@ export function PoolUsageChart({ deviceStats, poolLimit }: PoolUsageChartProps) 
     </Card>
   )
 }
-

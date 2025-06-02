@@ -280,4 +280,3 @@ export function AnalysisSettings({ formData, updateFormData, onNext, onBack }: A
     </div>
   )
 }
-

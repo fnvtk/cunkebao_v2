@@ -98,4 +98,3 @@ export function BasicSettings({ formData, onChange, onNext }: BasicSettingsProps
     </div>
   )
 }
-

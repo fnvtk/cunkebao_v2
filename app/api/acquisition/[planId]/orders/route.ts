@@ -17,4 +17,3 @@ export async function POST(request: Request, { params }: { params: { planId: str
     return NextResponse.json({ success: false, message: "订单提交失败" }, { status: 500 })
   }
 }
-

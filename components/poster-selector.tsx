@@ -82,4 +82,3 @@ export function PosterSelector({ open, onOpenChange, onSelect }: PosterSelectorP
     </Dialog>
   )
 }
-

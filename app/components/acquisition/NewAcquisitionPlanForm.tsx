@@ -94,4 +94,3 @@ export function NewAcquisitionPlanForm({ onSubmit, onCancel }: NewAcquisitionPla
     </form>
   )
 }
-

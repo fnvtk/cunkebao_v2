@@ -65,4 +65,3 @@ export function DeviceSelector({ selectedDevices, onChange }: DeviceSelectorProp
     </div>
   )
 }
-

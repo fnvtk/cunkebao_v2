@@ -82,4 +82,3 @@ export function TrendChart({ data, dataKey = "value", height = 300 }) {
     </div>
   )
 }
-

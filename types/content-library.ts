@@ -27,4 +27,3 @@ export interface ContentLibrarySelectResponse {
     name: string
   }
 }
-

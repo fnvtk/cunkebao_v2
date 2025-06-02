@@ -105,4 +105,3 @@ export default function ViewMomentsSyncTask({ params }: { params: { id: string }
     </div>
   )
 }
-

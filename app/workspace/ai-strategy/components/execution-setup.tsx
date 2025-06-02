@@ -200,4 +200,3 @@ export function ExecutionSetup({ formData, updateFormData, onNext, onBack }: Exe
     </div>
   )
 }
-

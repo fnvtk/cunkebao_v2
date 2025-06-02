@@ -119,4 +119,3 @@ export const trafficApi = {
     return response.json()
   },
 }
-

@@ -1,392 +1,262 @@
 "use client"
 
-import { AlertDescription } from "@/components/ui/alert"
-
-import { Alert } from "@/components/ui/alert"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Search, TagIcon, Users, Filter, AlertCircle, UserMinus } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Search, Users, Loader2, ExternalLink, Filter, CheckCircle2 } from 'lucide-react'
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from 'lucide-react'
+import Link from "next/link"
+import { useMobile } from "@/hooks/use-mobile"
 
-// 模拟人群标签数据
-const mockAudienceTags = [
-  { id: "tag-1", name: "高价值客户", description: "消费能力强的客户", count: 120 },
-  { id: "tag-2", name: "潜在客户", description: "有购买意向但未成交", count: 350 },
-  { id: "tag-3", name: "教师", description: "教育行业从业者", count: 85 },
-  { id: "tag-4", name: "医生", description: "医疗行业从业者", count: 64 },
-  { id: "tag-5", name: "企业白领", description: "企业中高层管理人员", count: 210 },
-  { id: "tag-6", name: "摄影爱好者", description: "对摄影有浓厚兴趣", count: 175 },
-  { id: "tag-7", name: "运动达人", description: "经常参与体育运动", count: 230 },
-  { id: "tag-8", name: "美食爱好者", description: "对美食有特别偏好", count: 320 },
-  { id: "tag-9", name: "20-30岁", description: "年龄在20-30岁之间", count: 450 },
-  { id: "tag-10", name: "30-40岁", description: "年龄在30-40岁之间", count: 380 },
-  { id: "tag-11", name: "高消费", description: "消费水平较高", count: 150 },
-  { id: "tag-12", name: "中等消费", description: "消费水平中等", count: 420 },
-]
-
-// 模拟流量词数据
-const mockTrafficTags = [
-  { id: "traffic-1", name: "健身器材", description: "对健身器材有兴趣", count: 95 },
-  { id: "traffic-2", name: "减肥产品", description: "对减肥产品有需求", count: 130 },
-  { id: "traffic-3", name: "护肤品", description: "对护肤品有兴趣", count: 210 },
-  { id: "traffic-4", name: "旅游度假", description: "有旅游度假需求", count: 180 },
-  { id: "traffic-5", name: "教育培训", description: "对教育培训有需求", count: 160 },
-  { id: "traffic-6", name: "投资理财", description: "对投资理财有兴趣", count: 110 },
-  { id: "traffic-7", name: "房产购买", description: "有购房需求", count: 75 },
-  { id: "traffic-8", name: "汽车购买", description: "有购车需求", count: 90 },
-]
-
-// 模拟排除标签数据
-const mockExcludeTags = [
-  { id: "exclude-1", name: "已拉群", description: "已被拉入群聊的用户", count: 320 },
-  { id: "exclude-2", name: "黑名单", description: "被标记为黑名单的用户", count: 45 },
-  { id: "exclude-3", name: "已转化", description: "已完成转化的用户", count: 180 },
-]
-
-interface TagSelectionProps {
-  onPrevious: () => void
-  onComplete: () => void
-  initialValues?: {
-    audienceTags: string[]
-    trafficTags: string[]
-    matchLogic: "and" | "or"
-    excludeTags: string[]
-  }
-  onValuesChange: (values: {
-    audienceTags: string[]
-    trafficTags: string[]
-    matchLogic: "and" | "or"
-    excludeTags: string[]
-  }) => void
+interface TrafficPool {
+  id: string
+  name: string
+  userCount: number
+  description: string
+  tags: string[]
+  lastUpdated: string
 }
 
-export function TagSelection({ onPrevious, onComplete, initialValues, onValuesChange }: TagSelectionProps) {
-  const [audienceTags, setAudienceTags] = useState<string[]>(initialValues?.audienceTags || [])
-  const [trafficTags, setTrafficTags] = useState<string[]>(initialValues?.trafficTags || [])
-  const [matchLogic, setMatchLogic] = useState<"and" | "or">(initialValues?.matchLogic || "or")
-  const [excludeTags, setExcludeTags] = useState<string[]>(initialValues?.excludeTags || ["exclude-1"])
-  const [audienceSearchQuery, setAudienceSearchQuery] = useState("")
-  const [trafficSearchQuery, setTrafficSearchQuery] = useState("")
-  const [excludeSearchQuery, setExcludeSearchQuery] = useState("")
-  const [autoTagEnabled, setAutoTagEnabled] = useState(true)
+// 模拟流量池数据
+const mockTrafficPools: TrafficPool[] = [
+  {
+    id: "pool-1",
+    name: "高意向客户池",
+    userCount: 230,
+    description: "包含所有高意向潜在客户",
+    tags: ["高意向", "已沟通", "潜在客户"],
+    lastUpdated: "2023-05-15 14:30",
+  },
+  {
+    id: "pool-2",
+    name: "活动获客池",
+    userCount: 156,
+    description: "市场活动获取的客户",
+    tags: ["活动", "新客户"],
+    lastUpdated: "2023-05-14 09:15",
+  },
+  {
+    id: "pool-3",
+    name: "老客户池",
+    userCount: 89,
+    description: "已成交的老客户",
+    tags: ["已成交", "老客户", "高价值"],
+    lastUpdated: "2023-05-13 11:45",
+  },
+  {
+    id: "pool-4",
+    name: "待跟进客户池",
+    userCount: 120,
+    description: "需要跟进的客户",
+    tags: ["待跟进", "中意向"],
+    lastUpdated: "2023-05-12 13:20",
+  },
+  {
+    id: "pool-5",
+    name: "VIP客户池",
+    userCount: 45,
+    description: "高价值VIP客户",
+    tags: ["VIP", "高价值", "已成交"],
+    lastUpdated: "2023-05-11 10:05",
+  },
+]
 
-  // 使用ref来跟踪是否已经通知了父组件初始选择
-  const initialNotificationRef = useRef(false)
-  // 使用ref来存储上一次的值，避免不必要的更新
-  const prevValuesRef = useRef({ audienceTags, trafficTags, matchLogic, excludeTags })
+interface TrafficPoolSelectionProps {
+  onSubmit: () => void
+  onPrevious: () => void
+  initialSelectedPools?: string[]
+  onPoolsChange: (poolIds: string[]) => void
+  selectedDevices?: string[] // 已选设备ID列表
+}
 
-  // 只在值变化时通知父组件，使用防抖
+export function TrafficPoolSelection({
+  onSubmit,
+  onPrevious,
+  initialSelectedPools = [],
+  onPoolsChange,
+  selectedDevices = [],
+}: TrafficPoolSelectionProps) {
+  const isMobile = useMobile()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedPools, setSelectedPools] = useState<string[]>(initialSelectedPools)
+  const [trafficPools, setTrafficPools] = useState<TrafficPool[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [userCountFilter, setUserCountFilter] = useState<"all" | "high" | "medium" | "low">("all")
+
+  // 获取流量池数据
   useEffect(() => {
-    if (!initialNotificationRef.current) {
-      initialNotificationRef.current = true
-      return
-    }
-
-    // 检查值是否真的变化了
-    const prevValues = prevValuesRef.current
-    const valuesChanged =
-      prevValues.audienceTags.length !== audienceTags.length ||
-      prevValues.trafficTags.length !== trafficTags.length ||
-      prevValues.matchLogic !== matchLogic ||
-      prevValues.excludeTags.length !== excludeTags.length
-
-    if (!valuesChanged) return
-
-    // 更新ref中存储的上一次值
-    prevValuesRef.current = { audienceTags, trafficTags, matchLogic, excludeTags }
-
-    // 使用防抖延迟通知父组件
-    const timer = setTimeout(() => {
-      onValuesChange({ audienceTags, trafficTags, matchLogic, excludeTags })
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [audienceTags, trafficTags, matchLogic, excludeTags, onValuesChange])
-
-  const filteredAudienceTags = mockAudienceTags.filter(
-    (tag) =>
-      tag.name.toLowerCase().includes(audienceSearchQuery.toLowerCase()) ||
-      tag.description.toLowerCase().includes(audienceSearchQuery.toLowerCase()),
-  )
-
-  const filteredTrafficTags = mockTrafficTags.filter(
-    (tag) =>
-      tag.name.toLowerCase().includes(trafficSearchQuery.toLowerCase()) ||
-      tag.description.toLowerCase().includes(trafficSearchQuery.toLowerCase()),
-  )
-
-  const filteredExcludeTags = mockExcludeTags.filter(
-    (tag) =>
-      tag.name.toLowerCase().includes(excludeSearchQuery.toLowerCase()) ||
-      tag.description.toLowerCase().includes(excludeSearchQuery.toLowerCase()),
-  )
-
-  const handleAudienceTagToggle = (tagId: string) => {
-    setAudienceTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]))
-  }
-
-  const handleTrafficTagToggle = (tagId: string) => {
-    setTrafficTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]))
-  }
-
-  const handleExcludeTagToggle = (tagId: string) => {
-    setExcludeTags((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]))
-  }
-
-  // 计算匹配的预估人数
-  const calculateEstimatedMatches = () => {
-    if (audienceTags.length === 0 && trafficTags.length === 0) return 0
-
-    const selectedAudienceTags = mockAudienceTags.filter((tag) => audienceTags.includes(tag.id))
-    const selectedTrafficTags = mockTrafficTags.filter((tag) => trafficTags.includes(tag.id))
-    const selectedExcludeTags = mockExcludeTags.filter((tag) => excludeTags.includes(tag.id))
-
-    let estimatedTotal = 0
-
-    if (audienceTags.length === 0) {
-      estimatedTotal = selectedTrafficTags.reduce((sum, tag) => sum + tag.count, 0)
-    } else if (trafficTags.length === 0) {
-      estimatedTotal = selectedAudienceTags.reduce((sum, tag) => sum + tag.count, 0)
-    } else {
-      // 如果两种标签都有选择，根据匹配逻辑计算
-      if (matchLogic === "and") {
-        // 取交集，估算为较小集合的70%
-        const minCount = Math.min(
-          selectedAudienceTags.reduce((sum, tag) => sum + tag.count, 0),
-          selectedTrafficTags.reduce((sum, tag) => sum + tag.count, 0),
-        )
-        estimatedTotal = Math.floor(minCount * 0.7)
-      } else {
-        // 取并集，估算为两者之和的80%（考虑重叠）
-        const totalCount =
-          selectedAudienceTags.reduce((sum, tag) => sum + tag.count, 0) +
-          selectedTrafficTags.reduce((sum, tag) => sum + tag.count, 0)
-        estimatedTotal = Math.floor(totalCount * 0.8)
+    const fetchTrafficPools = async () => {
+      setLoading(true)
+      try {
+        // 模拟API调用
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // 如果有选择设备，可以根据设备ID筛选流量池
+        if (selectedDevices.length > 0) {
+          console.log("根据已选设备筛选流量池:", selectedDevices)
+          // 这里应该是实际的API调用，根据设备ID获取相关流量池
+        }
+        setTrafficPools(mockTrafficPools)
+      } catch (error) {
+        console.error("获取流量池失败:", error)
+        setError("获取流量池列表失败，请稍后重试")
+      } finally {
+        setLoading(false)
       }
     }
 
-    // 减去排除标签的人数
-    const excludeCount = selectedExcludeTags.reduce((sum, tag) => sum + tag.count, 0)
-    return Math.max(0, estimatedTotal - excludeCount)
+    fetchTrafficPools()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(selectedDevices)])
+
+  // 通知父组件选择变化
+  useEffect(() => {
+    // 只在流量池选择实际变化时通知父组件
+    const currentSelection = JSON.stringify(selectedPools)
+    const initialSelection = JSON.stringify(initialSelectedPools)
+    
+    if (currentSelection !== initialSelection) {
+      onPoolsChange(selectedPools)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPools, JSON.stringify(initialSelectedPools)])
+
+  const handlePoolToggle = (poolId: string) => {
+    setSelectedPools((prev) => 
+      prev.includes(poolId) ? prev.filter((id) => id !== poolId) : [...prev, poolId]
+    )
   }
 
-  const estimatedMatches = calculateEstimatedMatches()
+  // 根据用户数量过滤
+  const getUserCountFilterValue = (pool: TrafficPool) => {
+    if (pool.userCount > 150) return "high"
+    if (pool.userCount > 50) return "medium"
+    return "low"
+  }
+
+  const filteredPools = trafficPools.filter((pool) => {
+    const matchesSearch = pool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          pool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          pool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesUserCount = userCountFilter === "all" || getUserCountFilterValue(pool) === userCountFilter
+    return matchesSearch && matchesUserCount
+  })
 
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-6">
-          <div className="space-y-6">
-            <Tabs defaultValue="include" className="w-full">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="include">包含条件</TabsTrigger>
-                <TabsTrigger value="exclude">排除条件</TabsTrigger>
-              </TabsList>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-medium">选择流量池</Label>
+              <Link href="/traffic-pool" className="text-blue-500 hover:text-blue-600 text-sm flex items-center">
+                前往流量池管理
+                <ExternalLink className="h-4 w-4 ml-1" />
+              </Link>
+            </div>
 
-              <TabsContent value="include" className="space-y-6 mt-4">
-                <div className="space-y-4">
-                  <Label className="text-base font-medium flex items-center">
-                    <TagIcon className="h-4 w-4 mr-2" />
-                    人群标签选择
-                  </Label>
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription className="text-blue-700">
+                选择流量池后，系统将自动筛选出该流量池中的用户，以确定自动建群所针对的目标群体。
+              </AlertDescription>
+            </Alert>
 
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索人群标签"
-                      value={audienceSearchQuery}
-                      onChange={(e) => setAudienceSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="搜索流量池名称、描述或标签"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
 
-                  <ScrollArea className="h-[200px] rounded-md border">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
-                      {filteredAudienceTags.map((tag) => (
-                        <div
-                          key={tag.id}
-                          className={`border rounded-md p-2 cursor-pointer hover:bg-gray-50 ${
-                            audienceTags.includes(tag.id) ? "border-blue-500 bg-blue-50" : ""
-                          }`}
-                          onClick={() => handleAudienceTagToggle(tag.id)}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-medium">{tag.name}</div>
-                            <Checkbox
-                              checked={audienceTags.includes(tag.id)}
-                              onCheckedChange={() => handleAudienceTagToggle(tag.id)}
-                              className="pointer-events-none"
-                            />
-                          </div>
-                          <div className="text-xs text-gray-500">{tag.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            <Users className="h-3 w-3 inline mr-1" />
-                            {tag.count}人
-                          </div>
-                        </div>
-                      ))}
-
-                      {filteredAudienceTags.length === 0 && (
-                        <div className="col-span-full p-4 text-center text-gray-500">没有找到符合条件的人群标签</div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                <div className="space-y-4">
-                  <Label className="text-base font-medium flex items-center">
-                    <Filter className="h-4 w-4 mr-2" />
-                    流量词选择
-                  </Label>
-
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索流量词"
-                      value={trafficSearchQuery}
-                      onChange={(e) => setTrafficSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-
-                  <ScrollArea className="h-[200px] rounded-md border">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
-                      {filteredTrafficTags.map((tag) => (
-                        <div
-                          key={tag.id}
-                          className={`border rounded-md p-2 cursor-pointer hover:bg-gray-50 ${
-                            trafficTags.includes(tag.id) ? "border-blue-500 bg-blue-50" : ""
-                          }`}
-                          onClick={() => handleTrafficTagToggle(tag.id)}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-medium">{tag.name}</div>
-                            <Checkbox
-                              checked={trafficTags.includes(tag.id)}
-                              onCheckedChange={() => handleTrafficTagToggle(tag.id)}
-                              className="pointer-events-none"
-                            />
-                          </div>
-                          <div className="text-xs text-gray-500">{tag.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            <Users className="h-3 w-3 inline mr-1" />
-                            {tag.count}人
-                          </div>
-                        </div>
-                      ))}
-
-                      {filteredTrafficTags.length === 0 && (
-                        <div className="col-span-full p-4 text-center text-gray-500">没有找到符合条件的流量词</div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base font-medium">标签匹配逻辑</Label>
-                  <RadioGroup value={matchLogic} onValueChange={(value) => setMatchLogic(value as "and" | "or")}>
-                    <div className="flex space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="and" id="and" />
-                        <Label htmlFor="and">同时满足所有标签（AND）</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="or" id="or" />
-                        <Label htmlFor="or">满足任一标签即可（OR）</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="exclude" className="space-y-6 mt-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-base font-medium flex items-center">
-                      <UserMinus className="h-4 w-4 mr-2" />
-                      排除标签
-                    </Label>
-                    <div className="flex items-center space-x-2">
-                      <Switch id="auto-tag" checked={autoTagEnabled} onCheckedChange={setAutoTagEnabled} />
-                      <Label htmlFor="auto-tag" className="text-sm">
-                        自动为拉群成员添加标签
-                      </Label>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索排除标签"
-                      value={excludeSearchQuery}
-                      onChange={(e) => setExcludeSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-
-                  <ScrollArea className="h-[200px] rounded-md border">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
-                      {filteredExcludeTags.map((tag) => (
-                        <div
-                          key={tag.id}
-                          className={`border rounded-md p-2 cursor-pointer hover:bg-gray-50 ${
-                            excludeTags.includes(tag.id) ? "border-red-500 bg-red-50" : ""
-                          }`}
-                          onClick={() => handleExcludeTagToggle(tag.id)}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-medium">{tag.name}</div>
-                            <Checkbox
-                              checked={excludeTags.includes(tag.id)}
-                              onCheckedChange={() => handleExcludeTagToggle(tag.id)}
-                              className="pointer-events-none"
-                            />
-                          </div>
-                          <div className="text-xs text-gray-500">{tag.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            <Users className="h-3 w-3 inline mr-1" />
-                            {tag.count}人
-                          </div>
-                        </div>
-                      ))}
-
-                      {filteredExcludeTags.length === 0 && (
-                        <div className="col-span-full p-4 text-center text-gray-500">没有找到符合条件的排除标签</div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    启用自动标记后，系统将为所有被拉入群的用户添加"已拉群"标签，避免重复拉人
-                  </AlertDescription>
-                </Alert>
-              </TabsContent>
-            </Tabs>
-
-            <div className="p-4 bg-blue-50 rounded-md">
-              <div className="flex items-center justify-between">
-                <span className="text-blue-700 font-medium">预估匹配人数:</span>
-                <span className="text-blue-700 font-bold">{estimatedMatches} 人</span>
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-400" />
+                <select
+                  className="border rounded px-2 py-1 text-sm"
+                  value={userCountFilter}
+                  onChange={(e) => setUserCountFilter(e.target.value as any)}
+                >
+                  <option value="all">全部用户量</option>
+                  <option value="high">大流量池 ({'>'}150人)</option>
+                  <option value="medium">中流量池 (50-150人)</option>
+                  <option value="low">小流量池 ({'<'}50人)</option>
+                </select>
               </div>
             </div>
 
-            {audienceTags.length === 0 && trafficTags.length === 0 && (
-              <div className="flex items-center p-3 bg-yellow-50 rounded-md text-yellow-800">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                请至少选择一个人群标签或流量词
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                <span>正在加载流量池列表...</span>
+              </div>
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : filteredPools.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">未找到匹配的流量池</div>
+            ) : (
+              <div className="space-y-3 mt-4">
+                {filteredPools.map((pool) => (
+                  <div
+                    key={pool.id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      selectedPools.includes(pool.id) 
+                        ? "border-blue-500 bg-blue-50" 
+                        : "border-gray-200 hover:border-blue-300 hover:bg-blue-50/50"
+                    }`}
+                    onClick={() => handlePoolToggle(pool.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <div className="mt-0.5">
+                          {selectedPools.includes(pool.id) ? (
+                            <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                          ) : (
+                            <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{pool.name}</div>
+                          <div className="text-sm text-gray-500 mt-1">{pool.description}</div>
+                          <div className="flex items-center mt-2">
+                            <Users className="h-4 w-4 text-blue-500 mr-1" />
+                            <span className="text-sm text-blue-600 font-medium">{pool.userCount} 人</span>
+                            <span className="text-xs text-gray-500 ml-3">更新于: {pool.lastUpdated}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {pool.tags.map((tag, index) => (
+                              <Badge key={index} variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+
+            <div className="flex items-center justify-between pt-2">
+              <div className="text-sm text-gray-500">
+                已选择 {selectedPools.length} / {filteredPools.length} 个流量池
+              </div>
+              {selectedPools.length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedPools([])}>
+                  清空选择
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -395,15 +265,10 @@ export function TagSelection({ onPrevious, onComplete, initialValues, onValuesCh
         <Button variant="outline" onClick={onPrevious}>
           上一步
         </Button>
-        <Button
-          onClick={onComplete}
-          className="bg-blue-500 hover:bg-blue-600"
-          disabled={audienceTags.length === 0 && trafficTags.length === 0}
-        >
+        <Button onClick={onSubmit} className="bg-blue-500 hover:bg-blue-600" disabled={selectedPools.length === 0}>
           完成
         </Button>
       </div>
     </div>
   )
 }
-

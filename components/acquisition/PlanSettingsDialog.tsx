@@ -100,4 +100,3 @@ export function PlanSettingsDialog({ open, onOpenChange, planId }: PlanSettingsD
     </Dialog>
   )
 }
-

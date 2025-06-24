@@ -1,7 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Smartphone, Users, Activity } from "lucide-react"
+import { Smartphone, Users, Activity, MessageCircle } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -218,6 +218,63 @@ export default function Home() {
                   </div>
                 </Link>
               ))}
+          </div>
+        </Card>
+
+        {/* 我的今日数据 */}
+        <Card className="p-4 bg-white">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-base font-semibold">工作台任务统计</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => router.push("/workspace/moments-sync")}
+            >
+              <div className="p-2 rounded-full bg-white text-purple-600">
+                <MessageCircle className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">12</div>
+                <div className="text-xs text-gray-500">朋友圈同步</div>
+              </div>
+            </div>
+            <div
+              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => router.push("/workspace/group-push")}
+            >
+              <div className="p-2 rounded-full bg-white text-orange-600">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">8</div>
+                <div className="text-xs text-gray-500">群发任务</div>
+              </div>
+            </div>
+            <div
+              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => router.push("/scenarios")}
+            >
+              <div className="p-2 rounded-full bg-white text-green-600">
+                <Activity className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">85%</div>
+                <div className="text-xs text-gray-500">获客转化</div>
+              </div>
+            </div>
+            <div
+              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => router.push("/workspace")}
+            >
+              <div className="p-2 rounded-full bg-white text-blue-600">
+                <Smartphone className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold">98%</div>
+                <div className="text-xs text-gray-500">系统活跃度</div>
+              </div>
+            </div>
           </div>
         </Card>
 

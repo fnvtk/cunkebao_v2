@@ -1,19 +1,28 @@
-import * as React from "react"
+"use client"
 
-const MOBILE_BREAKPOINT = 768
+import { useState, useEffect } from "react"
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+const MOBILE_MAX_WIDTH = 768 // Adjust as needed
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+export function useMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth <= MOBILE_MAX_WIDTH)
     }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
+
+    // Initial check
+    checkScreenSize()
+
+    // Subscribe to the window resize event
+    window.addEventListener("resize", checkScreenSize)
+
+    // Unsubscribe on unmount
+    return () => {
+      window.removeEventListener("resize", checkScreenSize)
+    }
   }, [])
 
-  return !!isMobile
+  return isMobile
 }

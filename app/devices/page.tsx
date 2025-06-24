@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -18,6 +17,8 @@ import {
   Trash2,
   Edit,
   MoreHorizontal,
+  ChevronLeft,
+  Loader2,
 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { DeviceFilter } from "@/app/components/common/DeviceFilter"
@@ -78,7 +79,7 @@ export default function DevicesPage() {
     fetchDevices()
   }, [])
 
-  // 简化的统计数据 - 只保留总设备数和在线设备数
+  // 简化的统计数据
   const stats = {
     totalDevices: devices.length,
     onlineDevices: devices.filter((d) => d.status === "online").length,
@@ -86,7 +87,7 @@ export default function DevicesPage() {
     busyDevices: devices.filter((d) => d.status === "busy").length,
   }
 
-  // 过滤设备 (与DeviceSelector中的逻辑一致)
+  // 过滤设备
   const filteredDevices = devices.filter((device) => {
     // 关键词搜索
     if (filters.keyword) {
@@ -101,7 +102,6 @@ export default function DevicesPage() {
       if (!matchesKeyword) return false
     }
 
-    // 其他过滤逻辑与DeviceSelector保持一致...
     if (filters.status?.length && !filters.status.includes(device.status)) return false
     if (filters.type?.length && !filters.type.includes(device.type)) return false
     if (filters.category?.length && device.category && !filters.category.includes(device.category)) return false
@@ -185,7 +185,7 @@ export default function DevicesPage() {
     setDevices([newDevice, ...devices])
   }
 
-  // 简化的设备卡片组件 - 移除型号显示，简化信息
+  // 简化的设备卡片组件 - 优化标签设计
   const DeviceCard = ({ device }: { device: Device }) => {
     const isSelected = selectedDevices.includes(device.id)
 
@@ -211,29 +211,31 @@ export default function DevicesPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <h3 className="font-medium truncate">{device.name}</h3>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    device.status === "online"
-                      ? "bg-green-500/10 text-green-600 border-green-200"
-                      : device.status === "busy"
-                        ? "bg-yellow-500/10 text-yellow-600 border-yellow-200"
-                        : "bg-gray-500/10 text-gray-600 border-gray-200",
-                  )}
-                >
-                  {device.status === "online" ? "在线" : device.status === "busy" ? "忙碌" : "离线"}
-                </Badge>
+                {/* 简化状态标签 - 使用圆点代替Badge */}
+                <div className="flex items-center space-x-1">
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      device.status === "online"
+                        ? "bg-green-500"
+                        : device.status === "busy"
+                          ? "bg-yellow-500"
+                          : "bg-gray-400",
+                    )}
+                  />
+                  <span className="text-xs text-gray-500">
+                    {device.status === "online" ? "在线" : device.status === "busy" ? "忙碌" : "离线"}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center space-x-1">
                 <Smartphone className={cn("h-4 w-4", device.type === "android" ? "text-green-500" : "text-gray-500")} />
-                <span className="text-xs text-gray-500">{device.type === "android" ? "Android" : "iOS"}</span>
               </div>
             </div>
 
             <div className="space-y-1 text-sm text-gray-600">
               <div>IMEI: {device.imei}</div>
               <div>微信号: {device.wechatId}</div>
-              {/* 移除型号显示 */}
               {device.remark && <div>备注: {device.remark}</div>}
             </div>
 
@@ -277,18 +279,35 @@ export default function DevicesPage() {
               </div>
             )}
 
-            {/* 标签 */}
+            {/* 简化标签设计 - 使用更小的圆点标签 */}
             {device.tags && device.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {device.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
+              <div className="flex items-center space-x-2 mt-2">
+                <div className="flex space-x-1">
+                  {device.tags.slice(0, 3).map((tag, index) => (
+                    <span
+                      key={tag}
+                      className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                        index === 0
+                          ? "bg-blue-100 text-blue-700"
+                          : index === 1
+                            ? "bg-green-100 text-green-700"
+                            : "bg-purple-100 text-purple-700",
+                      )}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {device.tags.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      +{device.tags.length - 3}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* 位置和操作员 */}
+            {/* 位置和操作员 - 简化显示 */}
             {(device.location || device.operator) && (
               <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
                 {device.location && (
@@ -297,7 +316,7 @@ export default function DevicesPage() {
                     <span>{device.location}</span>
                   </div>
                 )}
-                {device.operator && <span>操作员: {device.operator}</span>}
+                {device.operator && <span>{device.operator}</span>}
               </div>
             )}
           </div>
@@ -352,7 +371,7 @@ export default function DevicesPage() {
       </header>
 
       <div className="p-4 space-y-4">
-        {/* 简化的统计卡片 - 只保留总设备数和在线设备数 */}
+        {/* 简化的统计卡片 */}
         <div className="grid grid-cols-2 gap-4">
           <StatCard title="总设备数" value={stats.totalDevices} icon={<Smartphone className="h-5 w-5" />} />
           <StatCard
@@ -460,44 +479,5 @@ export default function DevicesPage() {
 
       <BottomNav />
     </div>
-  )
-}
-
-// 添加ChevronLeft组件
-function ChevronLeft(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  )
-}
-
-function Loader2(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12a9 9 0 11-6.219-8.56" />
-    </svg>
   )
 }

@@ -1,129 +1,173 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, Settings, Bell, LogOut } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-
-const menuItems = [
-  { href: "/devices", label: "设备管理" },
-  { href: "/wechat-accounts", label: "微信号管理" },
-  { href: "/traffic-pool", label: "流量池" },
-  { href: "/content", label: "内容库" },
-]
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Bell, LogOut, ChevronRight, Smartphone, MessageSquare, Database, Layers, Crown, Settings } from "lucide-react"
+import BottomNav from "@/app/components/BottomNav"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [isAuthenticated, setIsAuthenticated] = useState(true) // 模拟认证状态
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const [accountId] = useState(() => Math.floor(10000000 + Math.random() * 90000000).toString())
+  const { toast } = useToast()
+  const [user] = useState({
+    name: "张三",
+    email: "zhangsan@example.com",
+    avatar: "/placeholder.svg?height=80&width=80",
+    role: "管理员",
+    joinDate: "2023-01-15",
+    lastLogin: "2024-01-20 14:30",
+  })
+
+  const [stats] = useState({
+    devices: 12,
+    wechatAccounts: 25,
+    trafficPools: 8,
+    contentLibrary: 156,
+    todayTasks: 23,
+    completedTasks: 18,
+  })
+
+  const handleNavigation = (path: string) => {
+    router.push(path)
+  }
 
   const handleLogout = () => {
-    setIsAuthenticated(false)
-    setShowLogoutDialog(false)
+    toast({
+      title: "退出登录",
+      description: "您已成功退出登录",
+    })
     router.push("/login")
   }
 
-  if (!isAuthenticated) {
-    router.push("/login")
-    return null
-  }
+  // 我的功能菜单
+  const myFeatures = [
+    {
+      id: "devices",
+      title: "设备管理",
+      description: "管理您的设备和微信账号",
+      icon: <Smartphone className="h-5 w-5" />,
+      count: stats.devices,
+      path: "/devices",
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
+    },
+    {
+      id: "wechat",
+      title: "微信号管理",
+      description: "管理微信账号和好友",
+      icon: <MessageSquare className="h-5 w-5" />,
+      count: stats.wechatAccounts,
+      path: "/wechat-accounts",
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+    },
+    {
+      id: "traffic-pools",
+      title: "流量池管理",
+      description: "管理用户流量池和分组",
+      icon: <Layers className="h-5 w-5" />,
+      count: stats.trafficPools,
+      path: "/traffic-pool",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+    },
+    {
+      id: "content",
+      title: "内容库",
+      description: "管理营销内容和素材",
+      icon: <Database className="h-5 w-5" />,
+      count: stats.contentLibrary,
+      path: "/content",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+    },
+  ]
 
   return (
-    <div className="flex-1 bg-gradient-to-b from-blue-50 to-white pb-16">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
-        <div className="flex justify-between items-center p-4">
-          <h1 className="text-xl font-semibold text-blue-600">我的</h1>
-          <div className="flex items-center space-x-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="w-5 h-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56" align="end">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">设置选项</h4>
-                  {/* 移除了视图模式切换按钮 */}
-                </div>
-              </PopoverContent>
-            </Popover>
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex-1 bg-gray-50 min-h-screen pb-16">
       <div className="p-4 space-y-6">
         {/* 用户信息卡片 */}
-        <Card className="p-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-20 h-20">
-              <AvatarImage src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&h=400&auto=format&fit=crop" />
-              <AvatarFallback>KR</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold text-blue-600">卡若</h2>
-              <p className="text-gray-500">账号: {accountId}</p>
-              <div className="mt-2">
-                <Button variant="outline" size="sm">
-                  编辑资料
-                </Button>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                <AvatarFallback>{user.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-xl font-semibold">{user.name}</h2>
+                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                      <Crown className="h-3 w-3 mr-1" />
+                      {user.role}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleNavigation("/profile/notifications")}>
+                      <Bell className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleNavigation("/profile/settings")}>
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm">{user.email}</p>
+                <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                  <span>加入时间: {user.joinDate}</span>
+                  <span>最近登录: {user.lastLogin}</span>
+                </div>
               </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
-        {/* 功能菜单 */}
-        <Card className="divide-y">
-          {menuItems.map((item) => (
-            <div
-              key={item.href || item.label}
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50"
-              onClick={() => (item.href ? router.push(item.href) : null)}
+        {/* 我的功能 */}
+        <Card>
+          <CardHeader className="pb-2"></CardHeader>
+          <CardContent className="space-y-3">
+            {myFeatures.map((feature) => (
+              <div
+                key={feature.id}
+                className="flex items-center justify-between p-4 bg-white border rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleNavigation(feature.path)}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-lg ${feature.bgColor} ${feature.color}`}>{feature.icon}</div>
+                  <div>
+                    <div className="font-medium">{feature.title}</div>
+                    <div className="text-sm text-gray-500">{feature.description}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary">{feature.count}</Badge>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* 退出登录 */}
+        <Card>
+          <CardContent className="p-4">
+            <Button
+              variant="outline"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
+              onClick={handleLogout}
             >
-              <div className="flex items-center">
-                {item.icon && <span className="mr-2">{item.icon}</span>}
-                <span>{item.label}</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </div>
-          ))}
+              <LogOut className="h-4 w-4 mr-2" />
+              退出登录
+            </Button>
+          </CardContent>
         </Card>
-
-        {/* 退出登录按钮 */}
-        <Button
-          variant="ghost"
-          className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 mt-6"
-          onClick={() => setShowLogoutDialog(true)}
-        >
-          <LogOut className="w-5 h-5 mr-2" />
-          退出登录
-        </Button>
       </div>
 
-      {/* 退出登录确认对话框 */}
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认退出登录</DialogTitle>
-            <DialogDescription>您确定要退出登录吗？退出后需要重新登录才能使用完整功能。</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end space-x-2 mt-4">
-            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={handleLogout}>
-              确认退出
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BottomNav />
     </div>
   )
 }

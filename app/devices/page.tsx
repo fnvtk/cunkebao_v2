@@ -19,6 +19,10 @@ import {
   MoreHorizontal,
   ChevronLeft,
   Loader2,
+  Signal,
+  Wifi,
+  WifiOff,
+  Circle,
 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { DeviceFilter } from "@/app/components/common/DeviceFilter"
@@ -47,26 +51,26 @@ export default function DevicesPage() {
         await new Promise((resolve) => setTimeout(resolve, 800))
         const mockDevices: Device[] = Array.from({ length: 50 }, (_, i) => ({
           id: `device-${i + 1}`,
-          name: `设备 ${i + 1}`,
+          name: `设备${i + 1}`,
           imei: `sd1231${i + 23}`,
           type: i % 2 === 0 ? "android" : "ios",
           status: i < 40 ? "online" : i < 45 ? "offline" : "busy",
-          wechatId: `wxid_${Math.random().toString(36).substring(7)}`,
+          wechatId: `wx${Math.random().toString(36).substring(2, 8)}`,
           friendCount: Math.floor(Math.random() * 1000) + 100,
           battery: Math.floor(Math.random() * 100) + 1,
           lastActive: i < 5 ? "刚刚" : i < 10 ? "5分钟前" : i < 15 ? "1小时前" : "2小时前",
           addFriendStatus: Math.random() > 0.2 ? "normal" : "abnormal",
-          remark: `设备备注 ${i + 1}`,
-          model: i % 3 === 0 ? "iPhone 14" : i % 3 === 1 ? "Samsung S23" : "Xiaomi 13",
+          remark: i % 3 === 0 ? `备注${i + 1}` : undefined,
+          model: i % 3 === 0 ? "iPhone14" : i % 3 === 1 ? "S23" : "Mi13",
           category: i % 4 === 0 ? "acquisition" : i % 4 === 1 ? "maintenance" : i % 4 === 2 ? "testing" : "backup",
           todayAdded: Math.floor(Math.random() * 50),
           totalTasks: Math.floor(Math.random() * 100) + 10,
           completedTasks: Math.floor(Math.random() * 80) + 5,
-          activePlans: i < 30 ? [`plan-${i + 1}`, `plan-${i + 2}`] : [],
-          planNames: i < 30 ? [`计划 ${i + 1}`, `计划 ${i + 2}`] : [],
-          tags: i % 2 === 0 ? ["高效", "稳定"] : ["测试", "备用"],
+          activePlans: i < 30 ? [`plan-${i + 1}`] : [],
+          planNames: i < 30 ? [`计划${i + 1}`] : [],
+          tags: i % 2 === 0 ? ["高效"] : i % 3 === 0 ? ["测试"] : undefined,
           location: i % 3 === 0 ? "北京" : i % 3 === 1 ? "上海" : "深圳",
-          operator: `操作员${(i % 5) + 1}`,
+          operator: `员工${(i % 5) + 1}`,
         }))
         setDevices(mockDevices)
       } catch (error) {
@@ -185,131 +189,149 @@ export default function DevicesPage() {
     setDevices([newDevice, ...devices])
   }
 
-  // 简化的设备卡片组件 - 优化标签设计
+  // 获取信号强度图标
+  const getSignalIcon = (battery: number, status: string) => {
+    if (status === "offline") return <WifiOff className="h-3 w-3 text-gray-400" />
+    if (battery > 70) return <Signal className="h-3 w-3 text-green-500" />
+    if (battery > 30) return <Wifi className="h-3 w-3 text-yellow-500" />
+    return <Signal className="h-3 w-3 text-red-500" />
+  }
+
+  // 简化的设备卡片组件 - 移动端优化
   const DeviceCard = ({ device }: { device: Device }) => {
     const isSelected = selectedDevices.includes(device.id)
 
     return (
       <Card
         className={cn(
-          "p-4 cursor-pointer transition-all duration-200 hover:shadow-md",
+          "p-3 cursor-pointer transition-all duration-200 hover:shadow-md",
           isSelected ? "ring-2 ring-blue-500 bg-blue-50" : "hover:bg-gray-50",
         )}
         onClick={() => handleDeviceClick(device.id)}
       >
-        <div className="flex items-start space-x-3">
-          <div className="mt-1">
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={() => handleDeviceSelect(device.id)}
-              onClick={(e) => e.stopPropagation()}
-              className="data-[state=checked]:bg-blue-500"
-            />
-          </div>
+        <div className="flex items-center space-x-3">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => handleDeviceSelect(device.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="data-[state=checked]:bg-blue-500"
+          />
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-2">
+            {/* 第一行：设备名称和状态 */}
+            <div className="flex items-center justify-between mb-1">
               <div className="flex items-center space-x-2">
-                <h3 className="font-medium truncate">{device.name}</h3>
-                {/* 简化状态标签 - 使用圆点代替Badge */}
+                <h3 className="font-medium text-sm truncate max-w-[120px]">{device.name}</h3>
                 <div className="flex items-center space-x-1">
-                  <div
+                  {getSignalIcon(device.battery, device.status)}
+                  <Circle
                     className={cn(
-                      "w-2 h-2 rounded-full",
+                      "w-2 h-2 fill-current",
                       device.status === "online"
-                        ? "bg-green-500"
+                        ? "text-green-500"
                         : device.status === "busy"
-                          ? "bg-yellow-500"
-                          : "bg-gray-400",
+                          ? "text-yellow-500"
+                          : "text-gray-400",
                     )}
                   />
-                  <span className="text-xs text-gray-500">
-                    {device.status === "online" ? "在线" : device.status === "busy" ? "忙碌" : "离线"}
-                  </span>
                 </div>
               </div>
               <div className="flex items-center space-x-1">
-                <Smartphone className={cn("h-4 w-4", device.type === "android" ? "text-green-500" : "text-gray-500")} />
+                <Smartphone className={cn("h-3 w-3", device.type === "android" ? "text-green-500" : "text-gray-500")} />
+                <span className="text-xs text-gray-500">{device.model}</span>
               </div>
             </div>
 
-            <div className="space-y-1 text-sm text-gray-600">
-              <div>IMEI: {device.imei}</div>
-              <div>微信号: {device.wechatId}</div>
-              {device.remark && <div>备注: {device.remark}</div>}
+            {/* 第二行：IMEI和微信号 */}
+            <div className="text-xs text-gray-600 space-y-0.5">
+              <div className="truncate">IMEI: {device.imei}</div>
+              <div className="truncate">微信: {device.wechatId}</div>
             </div>
 
-            <div className="flex items-center justify-between mt-3 text-sm">
-              <div className="flex items-center space-x-4">
+            {/* 第三行：关键数据 */}
+            <div className="flex items-center justify-between mt-2 text-xs">
+              <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-1">
                   <Battery
                     className={cn(
-                      "h-4 w-4",
+                      "h-3 w-3",
                       device.battery > 50 ? "text-green-500" : device.battery > 20 ? "text-yellow-500" : "text-red-500",
                     )}
                   />
                   <span>{device.battery}%</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <Users className="h-4 w-4 text-blue-500" />
-                  <span>{device.friendCount}</span>
+                  <Users className="h-3 w-3 text-blue-500" />
+                  <span>{device.friendCount > 999 ? "999+" : device.friendCount}</span>
                 </div>
+                {device.todayAdded !== undefined && device.todayAdded > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <Plus className="h-3 w-3 text-green-500" />
+                    <span>{device.todayAdded}</span>
+                  </div>
+                )}
               </div>
-              <div className="text-xs text-gray-500">{device.lastActive}</div>
+              <span className="text-gray-500">{device.lastActive}</span>
             </div>
 
-            {/* 计划和任务信息 */}
-            {device.activePlans && device.activePlans.length > 0 && (
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center space-x-1 text-xs text-blue-600">
-                  <Activity className="h-3 w-3" />
-                  <span>活跃计划: {device.activePlans.length}</span>
-                </div>
-                {device.planNames && (
-                  <div className="text-xs text-gray-500 truncate">{device.planNames.join(", ")}</div>
+            {/* 第四行：活跃计划和标签 */}
+            {(device.activePlans?.length || device.tags?.length) && (
+              <div className="flex items-center justify-between mt-2">
+                {/*device.activePlans && device.activePlans.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <Activity className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs text-blue-600">{device.activePlans.length}个计划</span>
+                  </div>
+                )*/}
+                {device.activePlans && device.activePlans.length > 0 && (
+                  <div className="flex items-center space-x-1">
+                    <Activity className="h-3 w-3 text-gray-500" />
+                    <span className="text-xs text-gray-600">{device.activePlans.length}</span>
+                  </div>
+                )}
+                {/*device.tags && device.tags.length > 0 && (
+                  <div className="flex space-x-1">
+                    {device.tags.slice(0, 2).map((tag, index) => (
+                      <span
+                        key={tag}
+                        className={cn(
+                          "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium",
+                          index === 0 ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700",
+                        )}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {device.tags.length > 2 && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                        +{device.tags.length - 2}
+                      </span>
+                    )}
+                  </div>
+                )*/}
+                {device.tags && device.tags.length > 0 && (
+                  <div className="flex space-x-1">
+                    {device.tags.slice(0, 2).map((tag, index) => (
+                      <span
+                        key={tag}
+                        className="inline-block px-1 py-0.5 rounded-sm text-xs bg-gray-100 text-gray-600 border"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {device.tags.length > 2 && (
+                      <span className="inline-block px-1 py-0.5 rounded-sm text-xs bg-gray-50 text-gray-500 border">
+                        +{device.tags.length - 2}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
 
-            {/* 任务完成情况 */}
-            {device.totalTasks !== undefined && device.completedTasks !== undefined && (
-              <div className="mt-2 text-xs text-gray-500">
-                任务完成: {device.completedTasks}/{device.totalTasks}(
-                {Math.round((device.completedTasks / device.totalTasks) * 100)}%)
-              </div>
-            )}
-
-            {/* 简化标签设计 - 使用更小的圆点标签 */}
-            {device.tags && device.tags.length > 0 && (
-              <div className="flex items-center space-x-2 mt-2">
-                <div className="flex space-x-1">
-                  {device.tags.slice(0, 3).map((tag, index) => (
-                    <span
-                      key={tag}
-                      className={cn(
-                        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                        index === 0
-                          ? "bg-blue-100 text-blue-700"
-                          : index === 1
-                            ? "bg-green-100 text-green-700"
-                            : "bg-purple-100 text-purple-700",
-                      )}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {device.tags.length > 3 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                      +{device.tags.length - 3}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* 位置和操作员 - 简化显示 */}
+            {/* 位置和操作员 - 仅在有数据时显示 */}
             {(device.location || device.operator) && (
-              <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+              <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
                 {device.location && (
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-3 w-3" />
@@ -329,8 +351,9 @@ export default function DevicesPage() {
                 e.stopPropagation()
                 // 编辑设备
               }}
+              className="h-6 w-6 p-0"
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-3 w-3" />
             </Button>
             <Button
               variant="ghost"
@@ -339,8 +362,9 @@ export default function DevicesPage() {
                 e.stopPropagation()
                 // 更多操作
               }}
+              className="h-6 w-6 p-0"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -364,7 +388,7 @@ export default function DevicesPage() {
             </Button>
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAddDialog(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              添加设备
+              添加
             </Button>
           </div>
         </div>
@@ -373,11 +397,11 @@ export default function DevicesPage() {
       <div className="p-4 space-y-4">
         {/* 简化的统计卡片 */}
         <div className="grid grid-cols-2 gap-4">
-          <StatCard title="总设备数" value={stats.totalDevices} icon={<Smartphone className="h-5 w-5" />} />
+          <StatCard title="总数" value={stats.totalDevices} icon={<Smartphone className="h-4 w-4" />} />
           <StatCard
-            title="在线设备"
+            title="在线"
             value={stats.onlineDevices}
-            icon={<Activity className="h-5 w-5" />}
+            icon={<Activity className="h-4 w-4" />}
             valueColor="text-green-600"
           />
         </div>
@@ -385,14 +409,14 @@ export default function DevicesPage() {
         <Tabs defaultValue="list" className="w-full">
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="list">设备列表</TabsTrigger>
-              <TabsTrigger value="filter">过滤器</TabsTrigger>
+              <TabsTrigger value="list">列表</TabsTrigger>
+              <TabsTrigger value="filter">筛选</TabsTrigger>
             </TabsList>
             <div className="flex items-center space-x-2">
               {selectedDevices.length > 0 && (
                 <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
                   <Trash2 className="h-4 w-4 mr-1" />
-                  删除 ({selectedDevices.length})
+                  删除({selectedDevices.length})
                 </Button>
               )}
             </div>
@@ -401,34 +425,30 @@ export default function DevicesPage() {
           <TabsContent value="list" className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                显示 {paginatedDevices.length} / {filteredDevices.length} 个设备
-                {selectedDevices.length > 0 && (
-                  <span className="text-blue-600 ml-2">已选择 {selectedDevices.length} 个</span>
-                )}
+                {paginatedDevices.length}/{filteredDevices.length}
+                {selectedDevices.length > 0 && <span className="text-blue-600 ml-2">已选{selectedDevices.length}</span>}
               </div>
               <Button variant="outline" size="sm" onClick={handleSelectAll} disabled={paginatedDevices.length === 0}>
-                {selectedDevices.length === paginatedDevices.length && paginatedDevices.length > 0
-                  ? "取消全选"
-                  : "全选"}
+                {selectedDevices.length === paginatedDevices.length && paginatedDevices.length > 0 ? "取消" : "全选"}
               </Button>
             </div>
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" />
-                <span>正在加载设备列表...</span>
+                <span>加载中...</span>
               </div>
             ) : filteredDevices.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <Smartphone className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>未找到匹配的设备</p>
-                <Button variant="outline" className="mt-4" onClick={() => setFilters({})}>
-                  清除过滤器
+                <p>未找到设备</p>
+                <Button variant="outline" className="mt-4 bg-transparent" onClick={() => setFilters({})}>
+                  清除筛选
                 </Button>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2">
                   {paginatedDevices.map((device) => (
                     <DeviceCard key={device.id} device={device} />
                   ))}
@@ -446,7 +466,7 @@ export default function DevicesPage() {
                       上一页
                     </Button>
                     <span className="text-sm text-gray-500">
-                      第 {currentPage} / {Math.ceil(filteredDevices.length / devicesPerPage)} 页
+                      {currentPage}/{Math.ceil(filteredDevices.length / devicesPerPage)}
                     </span>
                     <Button
                       variant="outline"

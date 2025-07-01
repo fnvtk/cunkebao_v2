@@ -57,7 +57,7 @@ export default function AutoGroupPage() {
           <TabsContent value="history">
             <Card>
               <CardContent className="p-6">
-                <div className="text-center py-12 text-gray-500">暂无建群记录</div>
+                <div className="text-center py-12 text-gray-500">��无建群记录</div>
               </CardContent>
             </Card>
           </TabsContent>

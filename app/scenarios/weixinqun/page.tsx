@@ -64,7 +64,7 @@ export default function WechatGroupPage() {
     const colors = {
       群活动: "bg-green-100 text-green-800",
       产品分享: "bg-blue-100 text-blue-800",
-      用户交流: "bg-purple-100 text-purple-800",
+      用户��流: "bg-purple-100 text-purple-800",
       优惠信息: "bg-pink-100 text-pink-800",
       答疑解惑: "bg-orange-100 text-orange-800",
       新人欢迎: "bg-cyan-100 text-cyan-800",

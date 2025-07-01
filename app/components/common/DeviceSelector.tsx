@@ -26,7 +26,7 @@ export interface DeviceSelectorProps {
   selectedDevices?: string[]
   /** 设备选择变更回调 */
   onDevicesChange: (deviceIds: string[]) => void
-  /** 是否排除已用于其他计划的设备 */
+  /** 是���排除已用于其他计划的设备 */
   devices?: Device[]
   /** 是否显示下一步按钮 */
   showNextButton?: boolean

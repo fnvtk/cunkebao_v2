@@ -318,7 +318,7 @@ const generateMockInteractions = (): UserInteraction[] => {
 
     switch (type) {
       case "message":
-        content = ["您好，请问有什么可以帮到您？", "产品有什么优惠活动吗？", "谢谢，我考虑一下"][
+        content = ["您好，请问有什么可以帮到您？", "产品有什么优惠活动吗？", "��谢，我考虑一下"][
           Math.floor(Math.random() * 3)
         ]
         break

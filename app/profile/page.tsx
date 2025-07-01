@@ -2,125 +2,110 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Bell, LogOut, ChevronRight, Smartphone, MessageSquare, Database, Layers, Crown, Settings } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Bell, Settings, Smartphone, MessageCircle, Database, FolderOpen, ChevronRight, LogOut } from "lucide-react"
 import BottomNav from "@/app/components/BottomNav"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { toast } = useToast()
-  const [user] = useState({
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+
+  // 用户信息
+  const userInfo = {
     name: "张三",
     email: "zhangsan@example.com",
-    avatar: "/placeholder.svg?height=80&width=80",
     role: "管理员",
     joinDate: "2023-01-15",
     lastLogin: "2024-01-20 14:30",
-  })
-
-  const [stats] = useState({
-    devices: 12,
-    wechatAccounts: 25,
-    trafficPools: 8,
-    contentLibrary: 156,
-    todayTasks: 23,
-    completedTasks: 18,
-  })
-
-  const handleNavigation = (path: string) => {
-    router.push(path)
   }
 
-  const handleLogout = () => {
-    toast({
-      title: "退出登录",
-      description: "您已成功退出登录",
-    })
-    router.push("/login")
-  }
-
-  // 我的功能菜单
-  const myFeatures = [
+  // 功能模块数据
+  const functionModules = [
     {
       id: "devices",
       title: "设备管理",
       description: "管理您的设备和微信账号",
-      icon: <Smartphone className="h-5 w-5" />,
-      count: stats.devices,
+      icon: <Smartphone className="h-5 w-5 text-blue-500" />,
+      count: 12,
       path: "/devices",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      bgColor: "bg-blue-50",
     },
     {
       id: "wechat",
       title: "微信号管理",
       description: "管理微信账号和好友",
-      icon: <MessageSquare className="h-5 w-5" />,
-      count: stats.wechatAccounts,
+      icon: <MessageCircle className="h-5 w-5 text-green-500" />,
+      count: 25,
       path: "/wechat-accounts",
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      bgColor: "bg-green-50",
     },
     {
-      id: "traffic-pools",
+      id: "traffic",
       title: "流量池管理",
       description: "管理用户流量池和分组",
-      icon: <Layers className="h-5 w-5" />,
-      count: stats.trafficPools,
+      icon: <Database className="h-5 w-5 text-purple-500" />,
+      count: 8,
       path: "/traffic-pool",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      bgColor: "bg-purple-50",
     },
     {
       id: "content",
       title: "内容库",
       description: "管理营销内容和素材",
-      icon: <Database className="h-5 w-5" />,
-      count: stats.contentLibrary,
+      icon: <FolderOpen className="h-5 w-5 text-orange-500" />,
+      count: 156,
       path: "/content",
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
+      bgColor: "bg-orange-50",
     },
   ]
 
+  const handleLogout = () => {
+    toast({
+      title: "退出成功",
+      description: "您已安全退出系统",
+    })
+    router.push("/login")
+  }
+
+  const handleFunctionClick = (path: string) => {
+    router.push(path)
+  }
+
   return (
     <div className="flex-1 bg-gray-50 min-h-screen pb-16">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-4">
         {/* 用户信息卡片 */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center space-x-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                <AvatarFallback>{user.name[0]}</AvatarFallback>
+                <AvatarFallback className="bg-gray-200 text-gray-600 text-lg font-medium">
+                  {userInfo.name.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-xl font-semibold">{user.name}</h2>
-                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                      <Crown className="h-3 w-3 mr-1" />
-                      {user.role}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleNavigation("/profile/notifications")}>
-                      <Bell className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleNavigation("/profile/settings")}>
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <h2 className="text-lg font-medium">{userInfo.name}</h2>
+                  <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded border">
+                    {userInfo.role}
+                  </span>
                 </div>
-                <p className="text-gray-600 text-sm">{user.email}</p>
-                <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                  <span>加入时间: {user.joinDate}</span>
-                  <span>最近登录: {user.lastLogin}</span>
+                <p className="text-sm text-gray-600 mb-2">{userInfo.email}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                  <div>加入时间: {userInfo.joinDate}</div>
+                  <div>最近登录: {userInfo.lastLogin}</div>
                 </div>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -128,43 +113,41 @@ export default function ProfilePage() {
 
         {/* 我的功能 */}
         <Card>
-          <CardHeader className="pb-2"></CardHeader>
-          <CardContent className="space-y-3">
-            {myFeatures.map((feature) => (
-              <div
-                key={feature.id}
-                className="flex items-center justify-between p-4 bg-white border rounded-lg cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleNavigation(feature.path)}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${feature.bgColor} ${feature.color}`}>{feature.icon}</div>
-                  <div>
-                    <div className="font-medium">{feature.title}</div>
-                    <div className="text-sm text-gray-500">{feature.description}</div>
+          <CardContent className="p-4">
+            <h3 className="text-lg font-medium mb-4">我的功能</h3>
+            <div className="space-y-3">
+              {functionModules.map((module) => (
+                <div
+                  key={module.id}
+                  className="flex items-center p-3 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleFunctionClick(module.path)}
+                >
+                  <div className={`p-2 rounded-lg ${module.bgColor} mr-3`}>{module.icon}</div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{module.title}</div>
+                    <div className="text-xs text-gray-500">{module.description}</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded border">
+                      {module.count}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary">{feature.count}</Badge>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
         {/* 退出登录 */}
-        <Card>
-          <CardContent className="p-4">
-            <Button
-              variant="outline"
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              退出登录
-            </Button>
-          </CardContent>
-        </Card>
+        <Button
+          variant="outline"
+          className="w-full text-red-600 border-red-200 hover:bg-red-50 bg-transparent"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          退出登录
+        </Button>
       </div>
 
       <BottomNav />

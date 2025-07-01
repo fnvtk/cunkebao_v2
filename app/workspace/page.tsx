@@ -1,20 +1,8 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
-import {
-  ThumbsUp,
-  Clock,
-  Send,
-  Users,
-  Activity,
-  Share2,
-  MessageSquare,
-  BarChart2,
-  Brain,
-  LineChart,
-} from "lucide-react"
+import { ThumbsUp, Clock, Send, Users, Share2, MessageSquare, BarChart2, Brain, LineChart } from "lucide-react"
 
 export default function WorkspacePage() {
   // 模拟数据
@@ -111,27 +99,6 @@ export default function WorkspacePage() {
   return (
     <div className="flex-1 p-4 max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-6">工作台</h1>
-
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <Card className="p-5">
-          <h2 className="text-gray-500 text-sm mb-1">总任务数</h2>
-          <div className="text-5xl font-bold text-blue-500 mb-3">{totalTasks}</div>
-          <Progress value={progressPercentage} className="h-2 mb-2" />
-          <div className="text-sm text-gray-500">
-            进行中: {inProgressTasks} / 已完成: {completedTasks}
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <h2 className="text-gray-500 text-sm mb-1">今日任务</h2>
-          <div className="text-5xl font-bold text-green-500 mb-3">{todayTasks}</div>
-          <div className="flex items-center text-sm">
-            <Activity className="h-4 w-4 text-green-500 mr-1" />
-            <span className="text-gray-700">活跃度 {activityRate}%</span>
-          </div>
-        </Card>
-      </div>
 
       {/* 常用功能 */}
       <h2 className="text-xl font-bold mb-4">常用功能</h2>

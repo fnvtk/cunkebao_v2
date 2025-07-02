@@ -1,346 +1,348 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronLeft, Search, RefreshCw, ArrowRightLeft, AlertCircle, Filter } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, Search, Plus, RefreshCw, Smartphone, Users, MessageCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { toast } from "@/components/ui/use-toast"
-import { Progress } from "@/components/ui/progress"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
+// 微信号数据类型定义
 interface WechatAccount {
   id: string
-  avatar: string
   nickname: string
-  wechatId: string
-  deviceId: string
-  deviceName: string
+  wxid: string
+  avatar: string
+  status: "online" | "offline" | "error"
   friendCount: number
   todayAdded: number
-  remainingAdds: number
-  maxDailyAdds: number
-  status: "normal" | "abnormal"
+  deviceName: string
   lastActive: string
+  canAddToday: number
+  maxAddPerDay: number
 }
 
-// 生成与首页一致的模拟数据（42个微信账号，35个在线）
-const generateWechatAccounts = (): WechatAccount[] => {
-  const nicknames = [
-    "卡若-25vig",
-    "卡若-zok7e",
-    "卡若-ip9ob",
-    "卡若-2kna3",
-    "存客-a45kl",
-    "存客-b78mn",
-    "存客-c91op",
-    "存客-d23qr",
-    "微客-e56st",
-    "微客-f89uv",
-    "微客-g12wx",
-    "微客-h34yz",
-  ]
-
-  const avatars = [
-    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/img_v3_02jn_e7fcc2a4-3560-478d-911a-4ccd69c6392g.jpg-a8zVtwxMuSrPWN9dfWH93EBY0yM3Dh.jpeg",
-    "/diverse-group-avatars.png",
-    "/diverse-group-avatars.png",
-    "/diverse-group-avatars.png",
-    "/diverse-group-avatars.png",
-    "/diverse-group-avatars.png",
-  ]
-
-  const deviceNames = ["设备1", "设备2", "设备3", "设备4", "设备5", "设备6", "设备7", "设备8"]
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const isNormal = index < 35 // 确保35个正常状态，与首页一致
-    const lastActiveDate = new Date()
-    if (!isNormal) {
-      // 异常账号的最后活跃时间设置为1-7天前
-      lastActiveDate.setDate(lastActiveDate.getDate() - Math.floor(Math.random() * 7) - 1)
-    } else {
-      // 正常账号的最后活跃时间设置为最近24小时内
-      lastActiveDate.setHours(lastActiveDate.getHours() - Math.floor(Math.random() * 24))
-    }
-
-    return {
-      id: `account-${index + 1}`,
-      avatar: avatars[index % avatars.length],
-      nickname: nicknames[index % nicknames.length],
-      wechatId: `wxid_${Math.random().toString(36).substr(2, 8)}`,
-      deviceId: `device-${Math.floor(index / 5) + 1}`,
-      deviceName: deviceNames[Math.floor(index / 5)],
-      friendCount: Math.floor(Math.random() * (6300 - 520)) + 520,
-      todayAdded: isNormal ? Math.floor(Math.random() * 15) : 0,
-      remainingAdds: isNormal ? Math.floor(Math.random() * 10) + 5 : 0,
-      maxDailyAdds: 20,
-      status: isNormal ? "normal" : "abnormal",
-      lastActive: lastActiveDate.toISOString(),
-    }
-  })
-}
-
-const mockAccounts = generateWechatAccounts()
+// 模拟数据
+const mockWechatAccounts: WechatAccount[] = [
+  {
+    id: "1",
+    nickname: "卡若-zok7e",
+    wxid: "wxid_ilf29mrq",
+    avatar: "/placeholder.svg?height=40&width=40",
+    status: "online",
+    friendCount: 4557,
+    todayAdded: 7,
+    deviceName: "设备1",
+    lastActive: "2025/5/17 07:13:14",
+    canAddToday: 15,
+    maxAddPerDay: 30,
+  },
+  {
+    id: "2",
+    nickname: "小美-abc123",
+    wxid: "wxid_abc123def",
+    avatar: "/placeholder.svg?height=40&width=40",
+    status: "online",
+    friendCount: 3245,
+    todayAdded: 12,
+    deviceName: "设备2",
+    lastActive: "2025/5/17 08:25:33",
+    canAddToday: 8,
+    maxAddPerDay: 25,
+  },
+  {
+    id: "3",
+    nickname: "阿强-xyz789",
+    wxid: "wxid_xyz789ghi",
+    avatar: "/placeholder.svg?height=40&width=40",
+    status: "offline",
+    friendCount: 2156,
+    todayAdded: 3,
+    deviceName: "设备3",
+    lastActive: "2025/5/16 22:45:12",
+    canAddToday: 20,
+    maxAddPerDay: 20,
+  },
+]
 
 export default function WechatAccountsPage() {
   const router = useRouter()
-  const [accounts, setAccounts] = useState<WechatAccount[]>(mockAccounts)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
-  const [selectedAccount, setSelectedAccount] = useState<WechatAccount | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const accountsPerPage = 10
+  const [accounts, setAccounts] = useState<WechatAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
+  // 加载微信号数据
+  const loadWechatAccounts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // 模拟API调用
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      // 使用模拟数据
+      setAccounts(mockWechatAccounts)
+    } catch (err) {
+      console.error("加载微信号失败:", err)
+      setError("加载微信号失败，请稍后重试")
+      // 使用模拟数据作为降级方案
+      setAccounts(mockWechatAccounts)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadWechatAccounts()
+  }, [])
+
+  // 处理搜索
   const filteredAccounts = accounts.filter(
     (account) =>
-      account.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      account.wechatId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      account.deviceName.toLowerCase().includes(searchQuery.toLowerCase()),
+      account.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      account.wxid.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const paginatedAccounts = filteredAccounts.slice((currentPage - 1) * accountsPerPage, currentPage * accountsPerPage)
-
-  const totalPages = Math.ceil(filteredAccounts.length / accountsPerPage)
-
-  const handleTransferFriends = (account: WechatAccount) => {
-    setSelectedAccount(account)
-    setIsTransferDialogOpen(true)
+  // 处理返回
+  const handleBack = () => {
+    router.back()
   }
 
-  const handleConfirmTransfer = () => {
-    if (!selectedAccount) return
-
-    toast({
-      title: "好友转移计划已创建",
-      description: "请在场景获客中查看详情",
-    })
-    setIsTransferDialogOpen(false)
-    router.push("/scenarios")
-  }
-
+  // 处理刷新
   const handleRefresh = () => {
-    setIsLoading(true)
+    loadWechatAccounts()
+  }
 
-    // 模拟加载延迟
-    setTimeout(() => {
-      // 重新生成模拟数据，但保持总数和正常数量不变
-      const refreshedAccounts = generateWechatAccounts()
-      setAccounts(refreshedAccounts)
-      setIsLoading(false)
+  // 处理添加微信号
+  const handleAddAccount = () => {
+    router.push("/wechat-accounts/new")
+  }
 
-      toast({
-        title: "刷新成功",
-        description: "微信号列表已更新",
-      })
-    }, 800)
+  // 处理点击微信号
+  const handleAccountClick = (accountId: string) => {
+    router.push(`/wechat-accounts/${accountId}`)
+  }
+
+  // 获取状态颜色
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "online":
+        return "bg-green-500"
+      case "offline":
+        return "bg-gray-500"
+      case "error":
+        return "bg-red-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  // 获取状态文本
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "online":
+        return "正常"
+      case "offline":
+        return "离线"
+      case "error":
+        return "异常"
+      default:
+        return "未知"
+    }
+  }
+
+  // 计算进度百分比
+  const getProgressPercentage = (used: number, total: number) => {
+    return total > 0 ? Math.min((used / total) * 100, 100) : 0
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-gray-600">加载微信号中...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-b from-blue-50 to-white min-h-screen">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b">
-        <div className="flex items-center justify-between p-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* 头部导航 */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ChevronLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={handleBack}>
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-medium">微信号</h1>
           </div>
-          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
-        </div>
-      </header>
-
-      <div className="p-4">
-        <Card className="p-4 mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-              <Input
-                className="pl-9"
-                placeholder="搜索微信号/昵称"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" onClick={handleRefresh}>
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+            <Button size="sm" onClick={handleAddAccount} className="bg-blue-500 hover:bg-blue-600 text-white">
+              <Plus className="h-4 w-4 mr-1" />
+              添加微信号
             </Button>
           </div>
-        </Card>
+        </div>
 
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Card className="p-4">
-            <div className="text-sm text-gray-500">微信号总数</div>
-            <div className="text-2xl font-bold text-blue-600">{accounts.length}</div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-sm text-gray-500">正常状态</div>
-            <div className="text-2xl font-bold text-green-600">
-              {accounts.filter((a) => a.status === "normal").length}
+        {/* 搜索栏 */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="搜索微信号或昵称..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Card className="p-3 text-center">
+            <div className="flex items-center justify-center mb-1">
+              <Smartphone className="h-4 w-4 text-blue-500 mr-1" />
             </div>
+            <div className="text-lg font-semibold">{accounts.length}</div>
+            <div className="text-xs text-gray-500">总微信号</div>
+          </Card>
+          <Card className="p-3 text-center">
+            <div className="flex items-center justify-center mb-1">
+              <Users className="h-4 w-4 text-green-500 mr-1" />
+            </div>
+            <div className="text-lg font-semibold">{accounts.reduce((sum, acc) => sum + acc.friendCount, 0)}</div>
+            <div className="text-xs text-gray-500">总好友数</div>
+          </Card>
+          <Card className="p-3 text-center">
+            <div className="flex items-center justify-center mb-1">
+              <MessageCircle className="h-4 w-4 text-orange-500 mr-1" />
+            </div>
+            <div className="text-lg font-semibold">{accounts.reduce((sum, acc) => sum + acc.todayAdded, 0)}</div>
+            <div className="text-xs text-gray-500">今日新增</div>
           </Card>
         </div>
 
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 text-blue-500 animate-spin mb-4" />
-            <div className="text-gray-500">加载中...</div>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {paginatedAccounts.map((account) => (
+        {/* 错误提示 */}
+        {error && (
+          <Card className="p-4 mb-4 border-red-200 bg-red-50">
+            <div className="text-red-600 text-sm">{error}</div>
+          </Card>
+        )}
+
+        {/* 微信号列表 */}
+        <div className="space-y-3">
+          {filteredAccounts.length === 0 ? (
+            <Card className="p-8 text-center">
+              <div className="text-gray-400 mb-2">{searchTerm ? "未找到匹配的微信号" : "暂无微信号"}</div>
+              {!searchTerm && (
+                <Button onClick={handleAddAccount} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  添加第一个微信号
+                </Button>
+              )}
+            </Card>
+          ) : (
+            filteredAccounts.map((account) => (
               <Card
                 key={account.id}
-                className="p-4 hover:shadow-lg transition-all cursor-pointer"
-                onClick={() => router.push(`/wechat-accounts/${account.id}`)}
+                className="p-4 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => handleAccountClick(account.id)}
               >
-                <div className="flex items-start space-x-4">
-                  <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-blue-500/20">
-                    <AvatarImage src={account.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>{account.nickname[0]}</AvatarFallback>
-                  </Avatar>
+                <div className="flex items-center space-x-3">
+                  {/* 头像 */}
+                  <div className="relative">
+                    <img
+                      src={account.avatar || "/placeholder.svg"}
+                      alt={account.nickname}
+                      className="w-12 h-12 rounded-full bg-gray-200"
+                    />
+                    <div
+                      className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(
+                        account.status,
+                      )}`}
+                    />
+                  </div>
+
+                  {/* 基本信息 */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium truncate">{account.nickname}</h3>
-                        <Badge variant={account.status === "normal" ? "success" : "destructive"}>
-                          {account.status === "normal" ? "正常" : "异常"}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleTransferFriends(account)
-                        }}
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-medium truncate">{account.nickname}</h3>
+                      <Badge
+                        variant={account.status === "online" ? "default" : "secondary"}
+                        className={`text-xs ${
+                          account.status === "online"
+                            ? "bg-green-100 text-green-700"
+                            : account.status === "error"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
+                        }`}
                       >
-                        <ArrowRightLeft className="h-4 w-4 mr-2" />
-                        好友转移
-                      </Button>
+                        {getStatusText(account.status)}
+                      </Badge>
                     </div>
-                    <div className="mt-1 text-sm text-gray-500 space-y-1">
-                      <div>微信号：{account.wechatId}</div>
-                      <div className="flex items-center justify-between">
-                        <div>好友数量：{account.friendCount}</div>
-                        <div className="text-green-600">今日新增：+{account.todayAdded}</div>
+                    <div className="text-sm text-gray-500 mb-2">微信号: {account.wxid}</div>
+
+                    {/* 统计信息 */}
+                    <div className="grid grid-cols-3 gap-4 text-xs">
+                      <div>
+                        <div className="text-gray-500">好友数量</div>
+                        <div className="font-semibold">{account.friendCount}</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center space-x-1">
-                            <span>今日可添加：</span>
-                            <span className="font-medium">{account.remainingAdds}</span>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <AlertCircle className="h-4 w-4 text-gray-400" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>每日最多添加 {account.maxDailyAdds} 个好友</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {account.todayAdded}/{account.maxDailyAdds}
-                          </span>
-                        </div>
-                        <Progress value={(account.todayAdded / account.maxDailyAdds) * 100} className="h-2" />
+                      <div>
+                        <div className="text-gray-500">今日新增</div>
+                        <div className="font-semibold text-green-600">+{account.todayAdded}</div>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-500 pt-2">
-                        <div>所属设备：{account.deviceName}</div>
-                        <div>最后活跃：{new Date(account.lastActive).toLocaleString()}</div>
+                      <div>
+                        <div className="text-gray-500">今日可添加</div>
+                        <div className="font-semibold">{account.canAddToday}</div>
                       </div>
+                    </div>
+
+                    {/* 进度条 */}
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>今日添加进度</span>
+                        <span>
+                          {account.maxAddPerDay - account.canAddToday}/{account.maxAddPerDay}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: `${getProgressPercentage(
+                              account.maxAddPerDay - account.canAddToday,
+                              account.maxAddPerDay,
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 设备和时间信息 */}
+                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                      <span>所属设备: {account.deviceName}</span>
+                      <span>最后活跃: {account.lastActive}</span>
                     </div>
                   </div>
                 </div>
               </Card>
-            ))}
-          </div>
-        )}
-
-        {!isLoading && paginatedAccounts.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <div className="text-gray-500">没有找到符合条件的微信号</div>
-          </div>
-        )}
-
-        {!isLoading && paginatedAccounts.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      href="#"
-                      isActive={currentPage === page}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setCurrentPage(page)
-                      }}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                    }}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
-      <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>好友转移确认</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-500">
-              确认要将 {selectedAccount?.nickname} 的 {selectedAccount?.friendCount}{" "}
-              个好友转移到场景获客吗？系统将自动创建一个获客计划。
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTransferDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleConfirmTransfer}>确认转移</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* 底部导航占位 */}
+      <div className="h-20"></div>
     </div>
   )
 }

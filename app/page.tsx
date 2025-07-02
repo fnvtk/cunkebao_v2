@@ -11,6 +11,69 @@ import { useState, useEffect, useRef } from "react"
 import { Chart, registerables } from "chart.js"
 Chart.register(...registerables)
 
+// API接口定义
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://ckbapi.quwanzhi.com"
+
+// 统一的API请求客户端
+async function apiRequest<T>(url: string): Promise<T> {
+  try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("ckb_token") : null
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    }
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`
+    }
+
+    console.log("发送API请求:", url)
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      mode: "cors",
+    })
+
+    console.log("API响应状态:", response.status, response.statusText)
+
+    // 检查响应头的Content-Type
+    const contentType = response.headers.get("content-type")
+    console.log("响应Content-Type:", contentType)
+
+    if (!response.ok) {
+      // 如果是401未授权，清除本地存储
+      if (response.status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("ckb_token")
+          localStorage.removeItem("ckb_user")
+        }
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    // 检查是否是JSON响应
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text()
+      console.log("非JSON响应内容:", text.substring(0, 200))
+      throw new Error("服务器返回了非JSON格式的数据，可能是HTML错误页面")
+    }
+
+    const data = await response.json()
+    console.log("API响应数据:", data)
+
+    // 检查业务状态码
+    if (data.code && data.code !== 200 && data.code !== 0) {
+      throw new Error(data.message || "请求失败")
+    }
+
+    return data.data || data
+  } catch (error) {
+    console.error("API请求失败:", error)
+    throw error
+  }
+}
+
 export default function Home() {
   const router = useRouter()
   const chartRef = useRef(null)
@@ -18,30 +81,103 @@ export default function Home() {
 
   // 统一设备数据
   const [stats, setStats] = useState({
-    totalDevices: 42,
-    onlineDevices: 35,
-    totalWechatAccounts: 42,
-    onlineWechatAccounts: 35,
+    totalDevices: 0,
+    onlineDevices: 0,
+    totalWechatAccounts: 0,
+    onlineWechatAccounts: 0,
   })
 
+  const [isLoading, setIsLoading] = useState(true)
+  const [apiError, setApiError] = useState("")
+
   useEffect(() => {
-    // 模拟API调用
+    // 获取统计数据
     const fetchStats = async () => {
-      // 这里应该是实际的API调用
-      const mockStats = {
-        totalDevices: 42,
-        onlineDevices: 35,
-        totalWechatAccounts: 42,
-        onlineWechatAccounts: 35,
+      try {
+        setIsLoading(true)
+        setApiError("")
+
+        // 检查是否有token
+        const token = localStorage.getItem("ckb_token")
+        if (!token) {
+          console.log("未找到登录token，使用默认数据")
+          setStats({
+            totalDevices: 42,
+            onlineDevices: 35,
+            totalWechatAccounts: 42,
+            onlineWechatAccounts: 35,
+          })
+          setIsLoading(false)
+          return
+        }
+
+        // 尝试请求API数据
+        try {
+          // 并行请求多个接口
+          const [deviceStatsResult, wechatStatsResult] = await Promise.allSettled([
+            apiRequest(`${API_BASE_URL}/v1/dashboard/device-stats`),
+            apiRequest(`${API_BASE_URL}/v1/dashboard/wechat-stats`),
+          ])
+
+          const newStats = { ...stats }
+
+          // 处理设备统计数据
+          if (deviceStatsResult.status === "fulfilled") {
+            const deviceData = deviceStatsResult.value as any
+            newStats.totalDevices = deviceData.total || 0
+            newStats.onlineDevices = deviceData.online || 0
+          } else {
+            console.warn("设备统计API失败:", deviceStatsResult.reason)
+          }
+
+          // 处理微信号统计数据
+          if (wechatStatsResult.status === "fulfilled") {
+            const wechatData = wechatStatsResult.value as any
+            newStats.totalWechatAccounts = wechatData.total || 0
+            newStats.onlineWechatAccounts = wechatData.active || 0
+          } else {
+            console.warn("微信号统计API失败:", wechatStatsResult.reason)
+          }
+
+          setStats(newStats)
+        } catch (apiError) {
+          console.warn("API请求失败，使用默认数据:", apiError)
+          setApiError(apiError instanceof Error ? apiError.message : "API连接失败")
+
+          // 使用默认数据
+          setStats({
+            totalDevices: 42,
+            onlineDevices: 35,
+            totalWechatAccounts: 42,
+            onlineWechatAccounts: 35,
+          })
+        }
+      } catch (error) {
+        console.error("获取统计数据失败:", error)
+        setApiError(error instanceof Error ? error.message : "数据加载失败")
+
+        // 使用默认数据
+        setStats({
+          totalDevices: 42,
+          onlineDevices: 35,
+          totalWechatAccounts: 42,
+          onlineWechatAccounts: 35,
+        })
+      } finally {
+        setIsLoading(false)
       }
-      setStats(mockStats)
     }
+
     fetchStats()
+
+    // 定时刷新数据（每30秒）
+    const interval = setInterval(fetchStats, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   // 使用Chart.js创建图表
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && !isLoading) {
       // 如果已经有图表实例，先销毁它
       if (chartInstance.current) {
         chartInstance.current.destroy()
@@ -111,10 +247,10 @@ export default function Home() {
         chartInstance.current.destroy()
       }
     }
-  }, [])
+  }, [isLoading])
 
   const handleDevicesClick = () => {
-    router.push("/devices")
+    router.push("/profile/devices")
   }
 
   const handleWechatClick = () => {
@@ -188,11 +324,36 @@ export default function Home() {
     },
   ]
 
+  if (isLoading) {
+    return (
+      <div className="flex-1 pb-16 bg-gray-50">
+        <header className="sticky top-0 z-10 bg-white border-b">
+          <div className="flex justify-between items-center p-4">
+            <h1 className="text-xl font-semibold text-blue-600">存客宝</h1>
+          </div>
+        </header>
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="p-3 bg-white animate-pulse">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded"></div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 pb-16 bg-gray-50">
       <header className="sticky top-0 z-10 bg-white border-b">
         <div className="flex justify-between items-center p-4">
           <h1 className="text-xl font-semibold text-blue-600">存客宝</h1>
+          {apiError && (
+            <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">API连接异常，显示默认数据</div>
+          )}
         </div>
       </header>
 
@@ -223,7 +384,12 @@ export default function Home() {
                 <span className="text-lg font-bold text-blue-600">{stats.onlineWechatAccounts}</span>
                 <Activity className="w-5 h-5 text-blue-600" />
               </div>
-              <Progress value={(stats.onlineWechatAccounts / stats.totalWechatAccounts) * 100} className="h-1" />
+              <Progress
+                value={
+                  stats.totalWechatAccounts > 0 ? (stats.onlineWechatAccounts / stats.totalWechatAccounts) * 100 : 0
+                }
+                className="h-1"
+              />
             </div>
           </Card>
         </div>

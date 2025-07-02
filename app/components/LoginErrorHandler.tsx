@@ -26,12 +26,6 @@ export function LoginErrorHandler({ onRetry }: LoginErrorHandlerProps) {
         variant: "destructive",
         title: "网络连接已断开",
         description: "请检查您的网络连接后重试",
-        action: onRetry
-          ? {
-              label: "重试",
-              onClick: onRetry,
-            }
-          : undefined,
       })
     }
 
@@ -42,12 +36,12 @@ export function LoginErrorHandler({ onRetry }: LoginErrorHandlerProps) {
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
     }
-  }, [toast, onRetry])
+  }, [toast])
 
   // 处理401错误（未授权）
   useEffect(() => {
-    const handleUnauthorized = (event: MessageEvent) => {
-      if (event.data === "UNAUTHORIZED") {
+    const handleUnauthorized = (event: CustomEvent) => {
+      if (event.detail === "UNAUTHORIZED") {
         toast({
           variant: "destructive",
           title: "登录已过期",
@@ -63,10 +57,10 @@ export function LoginErrorHandler({ onRetry }: LoginErrorHandlerProps) {
       }
     }
 
-    window.addEventListener("message", handleUnauthorized)
+    window.addEventListener("auth-error", handleUnauthorized as EventListener)
 
     return () => {
-      window.removeEventListener("message", handleUnauthorized)
+      window.removeEventListener("auth-error", handleUnauthorized as EventListener)
     }
   }, [toast, router])
 

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Copy, Pencil, Trash2, Clock, Link } from "lucide-react"
+import { MoreHorizontal, Copy, Pencil, Trash2, Link, Play, Pause } from "lucide-react"
 
 interface Task {
   id: string
@@ -29,6 +29,12 @@ interface ScenarioAcquisitionCardProps {
   onDelete: (taskId: string) => void
   onOpenSettings?: (taskId: string) => void
   onStatusChange?: (taskId: string, newStatus: "running" | "paused") => void
+}
+
+// 计算通过率的工具函数
+function calculatePassRate(acquired: number, added: number): number {
+  if (acquired === 0) return 0
+  return Math.round((added / acquired) * 100)
 }
 
 export function ScenarioAcquisitionCard({
@@ -98,16 +104,30 @@ export function ScenarioAcquisitionCard({
   }, [])
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-all mb-4 bg-white/80">
+    <Card className="p-6 hover:shadow-lg transition-all mb-4 bg-white/80 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <h3 className="font-medium text-lg">{task.name}</h3>
           <Badge
-            variant={task.status === "running" ? "success" : "secondary"}
-            className="cursor-pointer hover:opacity-80"
+            variant={task.status === "running" ? "default" : "secondary"}
+            className={`cursor-pointer hover:opacity-80 ${
+              task.status === "running"
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-gray-500 hover:bg-gray-600 text-white"
+            }`}
             onClick={handleStatusChange}
           >
-            {task.status === "running" ? "进行中" : "已暂停"}
+            {task.status === "running" ? (
+              <>
+                <Play className="h-3 w-3 mr-1" />
+                进行中
+              </>
+            ) : (
+              <>
+                <Pause className="h-3 w-3 mr-1" />
+                已暂停
+              </>
+            )}
           </Badge>
         </div>
         <div className="relative z-20" ref={menuRef}>
@@ -180,22 +200,10 @@ export function ScenarioAcquisitionCard({
         </Card>
       </div>
 
-      <div className="flex items-center justify-between text-sm border-t pt-4 text-gray-500">
-        <div className="flex items-center space-x-2">
-          <Clock className="w-4 h-4" />
-          <span>上次执行：{task.lastUpdated}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Clock className="w-4 h-4" />
-          <span>下次执行：{task.nextExecutionTime}</span>
-        </div>
+      <div className="flex items-center justify-between text-sm text-gray-500 border-t pt-4">
+        <div>上次执行：{task.lastUpdated}</div>
+        <div>下次执行：{task.nextExecutionTime}</div>
       </div>
     </Card>
   )
-}
-
-// 计算通过率
-function calculatePassRate(acquired: number, added: number) {
-  if (acquired === 0) return 0
-  return Math.round((added / acquired) * 100)
 }

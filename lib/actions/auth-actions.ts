@@ -1,49 +1,30 @@
 "use server"
 
-import { z } from "zod"
-import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { loginWithPassword } from "@/lib/api/auth"
 
-const schema = z.object({
-  account: z.string().min(1, { message: "账号不能为空" }),
-  password: z.string().min(1, { message: "密码不能为空" }),
-})
-
-export async function authenticate(prevState: any, formData: FormData) {
-  const validatedFields = schema.safeParse({
-    account: formData.get("account"),
-    password: formData.get("password"),
-  })
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing Fields. Failed to Login.",
-    }
-  }
-
-  const { account, password } = validatedFields.data
-
+export async function authenticate(account: string, password: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ account: account, password: password, typeId: 1 }),
+    const response = await loginWithPassword({
+      account,
+      password,
+      typeid: 1,
     })
 
-    const data = await response.json()
-
-    if (data.code === 10000) {
-      cookies().set("token", data.data.token)
-      revalidatePath("/profile")
-      return { success: true }
+    if (response.code === 200 && response.data) {
+      return {
+        success: true,
+        token: response.data.token,
+        user: response.data.user,
+      }
     } else {
-      return { error: data.message }
+      return {
+        error: response.message || "登录失败",
+      }
     }
-  } catch (error: any) {
-    console.error("Authentication error:", error)
-    return { error: error.message || "Something went wrong!" }
+  } catch (error) {
+    console.error("认证失败:", error)
+    return {
+      error: error instanceof Error ? error.message : "登录失败，请重试",
+    }
   }
 }

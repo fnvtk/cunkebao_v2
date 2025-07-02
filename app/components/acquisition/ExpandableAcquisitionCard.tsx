@@ -35,6 +35,12 @@ interface ExpandableAcquisitionCardProps {
   onStatusChange?: (taskId: string, newStatus: "running" | "paused") => void
 }
 
+// 计算通过率的工具函数
+function calculatePassRate(acquired: number, added: number): number {
+  if (acquired === 0) return 0
+  return Math.round((added / acquired) * 100)
+}
+
 export function ExpandableAcquisitionCard({
   task,
   channel,
@@ -195,10 +201,4 @@ export function ExpandableAcquisitionCard({
       </div>
     </div>
   )
-}
-
-// 计算通过率
-function calculatePassRate(acquired: number, added: number) {
-  if (acquired === 0) return 0
-  return Math.round((added / acquired) * 100)
 }

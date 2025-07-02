@@ -10,6 +10,7 @@ import { MessageSettings } from "../../../new/steps/MessageSettings"
 import { TagSettings } from "../../../new/steps/TagSettings"
 import { useRouter } from "next/navigation"
 import { toast } from "@/components/ui/use-toast"
+import { scenarioApi } from "@/lib/api/scenarios"
 
 const steps = [
   { id: 1, title: "步骤一", subtitle: "基础设置" },
@@ -39,50 +40,43 @@ export default function EditAcquisitionPlan({ params }: { params: { channel: str
   })
 
   useEffect(() => {
-    // 模拟从API获取计划数据
     const fetchPlanData = async () => {
-      try {
-        // 这里应该是实际的API调用
-        const mockData = {
-          planName: "测试计划",
-          accounts: ["account1"],
-          dailyLimit: 15,
-          enabled: true,
-          remarkType: "phone",
-          remarkKeyword: "测试",
-          greeting: "你好",
-          addFriendTimeStart: "09:00",
-          addFriendTimeEnd: "18:00",
-          addFriendInterval: 2,
-          maxDailyFriends: 25,
-          messageInterval: 2,
-          messageContent: "欢迎",
-        }
-        setFormData(mockData)
-        setLoading(false)
-      } catch (error) {
+      setLoading(true)
+      const response = await scenarioApi.getById(params.id)
+      if (response.code === 0 && response.data) {
+        // 假设返回的数据结构与 formData 兼容
+        setFormData(response.data as any)
+      } else {
         toast({
           title: "加载失败",
-          description: "获取计划数据失败，请重试",
+          description: response.message || "获取计划数据失败，请重试",
           variant: "destructive",
         })
-        setLoading(false)
       }
+      setLoading(false)
     }
 
-    fetchPlanData()
-  }, [])
+    if (params.id) {
+      fetchPlanData()
+    }
+  }, [params.id])
 
   const handleSave = async () => {
     try {
-      // 这里应该是实际的API调用
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      toast({
-        title: "保存成功",
-        description: "获客计划已更新",
-      })
-      router.push(`/scenarios/${params.channel}`)
+      const response = await scenarioApi.update({ id: params.id, ...formData })
+      if (response.code === 0) {
+        toast({
+          title: "保存成功",
+          description: "获客计划已更新",
+        })
+        router.push(`/scenarios/${params.channel}`)
+      } else {
+        toast({
+          title: "保存失败",
+          description: response.message,
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       toast({
         title: "保存失败",

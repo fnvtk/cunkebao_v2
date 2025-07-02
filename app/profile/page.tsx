@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,14 +8,24 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Bell, Settings, Smartphone, MessageCircle, Database, FolderOpen, ChevronRight, LogOut } from "lucide-react"
 import BottomNav from "@/app/components/BottomNav"
 import { toast } from "@/components/ui/use-toast"
+import { getDeviceStats } from "@/lib/api/devices"
+import { getWechatStats } from "@/lib/api/wechat"
+import { getTrafficStats } from "@/lib/api/traffic"
+import { getContentStats } from "@/lib/api/content"
 
 export default function ProfilePage() {
   const router = useRouter()
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [stats, setStats] = useState({
+    devices: 12,
+    wechat: 25,
+    traffic: 8,
+    content: 156,
+  })
 
   // 用户信息
   const userInfo = {
-    name: "张三",
+    name: "卡若",
     email: "zhangsan@example.com",
     role: "管理员",
     joinDate: "2023-01-15",
@@ -29,8 +39,8 @@ export default function ProfilePage() {
       title: "设备管理",
       description: "管理您的设备和微信账号",
       icon: <Smartphone className="h-5 w-5 text-blue-500" />,
-      count: 12,
-      path: "/devices",
+      count: stats.devices,
+      path: "/profile/devices",
       bgColor: "bg-blue-50",
     },
     {
@@ -38,16 +48,16 @@ export default function ProfilePage() {
       title: "微信号管理",
       description: "管理微信账号和好友",
       icon: <MessageCircle className="h-5 w-5 text-green-500" />,
-      count: 25,
+      count: stats.wechat,
       path: "/wechat-accounts",
       bgColor: "bg-green-50",
     },
     {
       id: "traffic",
-      title: "流量池管理",
+      title: "流量池",
       description: "管理用户流量池和分组",
       icon: <Database className="h-5 w-5 text-purple-500" />,
-      count: 8,
+      count: stats.traffic,
       path: "/traffic-pool",
       bgColor: "bg-purple-50",
     },
@@ -56,11 +66,36 @@ export default function ProfilePage() {
       title: "内容库",
       description: "管理营销内容和素材",
       icon: <FolderOpen className="h-5 w-5 text-orange-500" />,
-      count: 156,
+      count: stats.content,
       path: "/content",
       bgColor: "bg-orange-50",
     },
   ]
+
+  // 加载统计数据
+  const loadStats = async () => {
+    try {
+      const [deviceStats, wechatStats, trafficStats, contentStats] = await Promise.allSettled([
+        getDeviceStats(),
+        getWechatStats(),
+        getTrafficStats(),
+        getContentStats(),
+      ])
+
+      setStats({
+        devices: deviceStats.status === "fulfilled" ? deviceStats.value.total : 12,
+        wechat: wechatStats.status === "fulfilled" ? wechatStats.value.total : 25,
+        traffic: trafficStats.status === "fulfilled" ? trafficStats.value.total : 8,
+        content: contentStats.status === "fulfilled" ? contentStats.value.total : 156,
+      })
+    } catch (error) {
+      console.error("加载统计数据失败:", error)
+    }
+  }
+
+  useEffect(() => {
+    loadStats()
+  }, [])
 
   const handleLogout = () => {
     toast({
@@ -89,13 +124,12 @@ export default function ProfilePage() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
                   <h2 className="text-lg font-medium">{userInfo.name}</h2>
-                  <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded border">
+                  <span className="px-2 py-1 text-xs bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full font-medium shadow-sm">
                     {userInfo.role}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mb-2">{userInfo.email}</p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                  <div>加入时间: {userInfo.joinDate}</div>
+                <div className="text-xs text-gray-500">
                   <div>最近登录: {userInfo.lastLogin}</div>
                 </div>
               </div>
@@ -114,12 +148,11 @@ export default function ProfilePage() {
         {/* 我的功能 */}
         <Card>
           <CardContent className="p-4">
-            <h3 className="text-lg font-medium mb-4">我的功能</h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {functionModules.map((module) => (
                 <div
                   key={module.id}
-                  className="flex items-center p-3 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center p-4 rounded-lg border hover:bg-gray-50 cursor-pointer transition-colors w-full"
                   onClick={() => handleFunctionClick(module.path)}
                 >
                   <div className={`p-2 rounded-lg ${module.bgColor} mr-3`}>{module.icon}</div>
@@ -128,7 +161,7 @@ export default function ProfilePage() {
                     <div className="text-xs text-gray-500">{module.description}</div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded border">
+                    <span className="px-2 py-1 text-xs bg-gray-50 text-gray-700 rounded-full border border-gray-200 font-medium shadow-sm">
                       {module.count}
                     </span>
                     <ChevronRight className="h-4 w-4 text-gray-400" />

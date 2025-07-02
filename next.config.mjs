@@ -132,11 +132,13 @@ const nextConfig = {
 }
 
 // Bundle分析器配置
+let finalConfig = nextConfig
+
 if (process.env.ANALYZE === 'true') {
-  const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer')
+  finalConfig = withBundleAnalyzer({
     enabled: true,
-  })
-  module.exports = withBundleAnalyzer(nextConfig)
-} else {
-  module.exports = nextConfig
+  })(nextConfig)
 }
+
+export default finalConfig

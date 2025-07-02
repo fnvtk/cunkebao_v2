@@ -1,253 +1,310 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Plus, ArrowLeft, TrendingUp } from "lucide-react"
-import { useRouter } from "next/navigation"
+import type React from "react"
 
-// 场景数据类型定义
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Plus, Search, Filter, Smartphone, Users, MessageSquare, ImageIcon, TrendingUp, BarChart3 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+
+// 场景获客数据类型定义
 interface ScenarioData {
   id: string
   name: string
-  icon: string
-  todayCount: number
-  growthRate: number
+  description: string
+  icon: React.ReactNode
+  stats: {
+    totalPlans: number
+    activePlans: number
+    totalAcquired: number
+    todayAcquired: number
+  }
   status: "active" | "inactive"
-  type: "normal" | "ai"
+  category: string
 }
-
-// 模拟数据
-const mockScenarios: ScenarioData[] = [
-  { id: "haibao", name: "海报获客", icon: "🎨", todayCount: 167, growthRate: 10.2, status: "active", type: "normal" },
-  { id: "order", name: "订单获客", icon: "📋", todayCount: 112, growthRate: 7.8, status: "active", type: "normal" },
-  { id: "douyin", name: "抖音获客", icon: "🎵", todayCount: 156, growthRate: 12.5, status: "active", type: "normal" },
-  {
-    id: "xiaohongshu",
-    name: "小红书获客",
-    icon: "📖",
-    todayCount: 89,
-    growthRate: 8.3,
-    status: "active",
-    type: "normal",
-  },
-  { id: "phone", name: "电话获客", icon: "📞", todayCount: 42, growthRate: 15.8, status: "active", type: "normal" },
-  {
-    id: "gongzhonghao",
-    name: "公众号获客",
-    icon: "💚",
-    todayCount: 234,
-    growthRate: 15.7,
-    status: "active",
-    type: "normal",
-  },
-  {
-    id: "weixinqun",
-    name: "微信群获客",
-    icon: "💬",
-    todayCount: 145,
-    growthRate: 11.2,
-    status: "active",
-    type: "normal",
-  },
-  { id: "payment", name: "付款码获客", icon: "🎨", todayCount: 78, growthRate: 9.5, status: "active", type: "normal" },
-  { id: "api", name: "API获客", icon: "🔗", todayCount: 198, growthRate: 14.3, status: "active", type: "normal" },
-  { id: "ai-friend", name: "AI智能加友", icon: "🤖", todayCount: 245, growthRate: 18.5, status: "active", type: "ai" },
-  { id: "ai-group", name: "AI群引流", icon: "🤖", todayCount: 178, growthRate: 15.2, status: "active", type: "ai" },
-  { id: "ai-convert", name: "AI运营转化", icon: "🤖", todayCount: 134, growthRate: 12.8, status: "active", type: "ai" },
-]
 
 export default function ScenariosPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [scenarios, setScenarios] = useState<ScenarioData[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterCategory, setFilterCategory] = useState("all")
 
-  // 加载场景数据
+  // 模拟场景数据
+  const mockScenarios: ScenarioData[] = [
+    {
+      id: "phone",
+      name: "手机号获客",
+      description: "通过手机号码进行精准获客，支持批量导入和智能筛选",
+      icon: <Smartphone className="h-6 w-6" />,
+      stats: {
+        totalPlans: 12,
+        activePlans: 8,
+        totalAcquired: 2580,
+        todayAcquired: 45,
+      },
+      status: "active",
+      category: "通讯获客",
+    },
+    {
+      id: "weixinqun",
+      name: "微信群获客",
+      description: "通过微信群进行社群营销获客，自动化群管理",
+      icon: <Users className="h-6 w-6" />,
+      stats: {
+        totalPlans: 8,
+        activePlans: 6,
+        totalAcquired: 1890,
+        todayAcquired: 32,
+      },
+      status: "active",
+      category: "社交获客",
+    },
+    {
+      id: "douyin",
+      name: "抖音获客",
+      description: "抖音平台内容营销和用户获取，支持评论互动",
+      icon: <MessageSquare className="h-6 w-6" />,
+      stats: {
+        totalPlans: 15,
+        activePlans: 12,
+        totalAcquired: 3420,
+        todayAcquired: 78,
+      },
+      status: "active",
+      category: "短视频获客",
+    },
+    {
+      id: "haibao",
+      name: "海报获客",
+      description: "通过精美海报进行视觉营销获客，支持多平台分发",
+      icon: <ImageIcon className="h-6 w-6" />,
+      stats: {
+        totalPlans: 6,
+        activePlans: 4,
+        totalAcquired: 1250,
+        todayAcquired: 28,
+      },
+      status: "active",
+      category: "内容获客",
+    },
+  ]
+
   useEffect(() => {
-    const loadScenarios = async () => {
+    // 模拟API调用
+    const fetchScenarios = async () => {
       try {
         setLoading(true)
-        // 模拟API调用延迟
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        // 模拟网络延迟
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         setScenarios(mockScenarios)
       } catch (error) {
-        console.error("加载场景数据失败:", error)
-        // 使用模拟数据作为降级方案
-        setScenarios(mockScenarios)
+        toast({
+          title: "加载失败",
+          description: "无法加载场景数据，请稍后重试",
+          variant: "destructive",
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    loadScenarios()
-  }, [])
+    fetchScenarios()
+  }, [toast])
 
-  // 处理场景点击
-  const handleScenarioClick = (scenarioId: string) => {
-    router.push(`/scenarios/${scenarioId}`)
-  }
-
-  // 处理新建计划 - 跳转到计划创建页面
+  // 处理新建计划
   const handleNewPlan = () => {
     router.push("/plans/new")
   }
 
-  // 处理特定场景的新建计划
-  const handleScenarioNewPlan = (scenarioId: string) => {
+  // 处理场景新建
+  const handleScenarioNew = (scenarioId: string) => {
     router.push(`/plans/new?scenario=${scenarioId}`)
   }
 
-  // 处理返回
-  const handleBack = () => {
-    router.back()
+  // 处理场景查看
+  const handleScenarioView = (scenarioId: string) => {
+    router.push(`/scenarios/${scenarioId}`)
   }
 
-  // 格式化增长率显示
-  const formatGrowthRate = (rate: number) => {
-    return rate > 0 ? `+${rate}%` : `${rate}%`
-  }
+  // 过滤场景数据
+  const filteredScenarios = scenarios.filter((scenario) => {
+    const matchesSearch =
+      scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      scenario.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = filterCategory === "all" || scenario.category === filterCategory
+    return matchesSearch && matchesCategory
+  })
 
-  // 获取增长率颜色
-  const getGrowthColor = (rate: number) => {
-    return rate > 0 ? "text-green-500" : rate < 0 ? "text-red-500" : "text-gray-500"
-  }
-
-  // 分离常规场景和AI场景
-  const normalScenarios = scenarios.filter((s) => s.type === "normal")
-  const aiScenarios = scenarios.filter((s) => s.type === "ai")
+  // 获取所有分类
+  const categories = ["all", ...Array.from(new Set(scenarios.map((s) => s.category)))]
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <TrendingUp className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">加载中...</p>
+      <div className="container mx-auto p-4 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">场景获客</h1>
+            <p className="text-muted-foreground">选择合适的获客场景，开始您的营销之旅</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 头部导航 */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">场景获客</h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" onClick={handleNewPlan} className="bg-blue-500 hover:bg-blue-600 text-white">
-              <Plus className="h-4 w-4 mr-1" />
-              新建计划
-            </Button>
-          </div>
+    <div className="container mx-auto p-4 space-y-6">
+      {/* 页面头部 */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">场景获客</h1>
+          <p className="text-muted-foreground">选择合适的获客场景，开始您的营销之旅</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button size="sm" onClick={handleNewPlan} className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Plus className="h-4 w-4 mr-1" />
+            新建计划
+          </Button>
         </div>
       </div>
 
-      {/* 主要内容 */}
-      <div className="p-4 space-y-6">
-        {/* 常规获客场景 */}
-        <div className="grid grid-cols-2 gap-3">
-          {normalScenarios.map((scenario) => (
-            <Card
-              key={scenario.id}
-              className="p-4 hover:shadow-md transition-all cursor-pointer bg-white relative group"
-              onClick={() => handleScenarioClick(scenario.id)}
-            >
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="text-2xl mb-1">{scenario.icon}</div>
-                <h3 className="font-medium text-sm">{scenario.name}</h3>
-                <div className="text-xs text-gray-500">
-                  今日: <span className="font-semibold text-gray-900">{scenario.todayCount}</span>
+      {/* 搜索和筛选 */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="搜索场景..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-full sm:w-48">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="选择分类" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部分类</SelectItem>
+            {categories.slice(1).map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 场景卡片网格 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredScenarios.map((scenario) => (
+          <Card key={scenario.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-50 rounded-lg text-blue-600">{scenario.icon}</div>
+                  <div>
+                    <CardTitle className="text-lg">{scenario.name}</CardTitle>
+                    <Badge variant={scenario.status === "active" ? "default" : "secondary"} className="text-xs">
+                      {scenario.status === "active" ? "运行中" : "已停止"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className={`text-xs font-medium flex items-center ${getGrowthColor(scenario.growthRate)}`}>
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  {formatGrowthRate(scenario.growthRate)}
+              </div>
+              <CardDescription className="text-sm">{scenario.description}</CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {/* 统计数据 */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-600">总计划</span>
+                  <span className="font-semibold">{scenario.stats.totalPlans}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <span className="text-gray-600">活跃</span>
+                  <span className="font-semibold text-green-600">{scenario.stats.activePlans}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span className="text-gray-600">总获客</span>
+                  <span className="font-semibold text-blue-600">{scenario.stats.totalAcquired}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4 text-orange-500" />
+                  <span className="text-gray-600">今日</span>
+                  <span className="font-semibold text-orange-600">{scenario.stats.todayAcquired}</span>
                 </div>
               </div>
 
-              {/* 悬浮时显示新建按钮 */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* 操作按钮 */}
+              <div className="flex space-x-2 pt-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 text-xs bg-white"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleScenarioNewPlan(scenario.id)
-                  }}
+                  className="flex-1 bg-transparent"
+                  onClick={() => handleScenarioView(scenario.id)}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
+                  查看详情
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => handleScenarioNew(scenario.id)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
                   新建
                 </Button>
               </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* AI智能获客部分 */}
-        {aiScenarios.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <div className="text-blue-500">🤖</div>
-              <h2 className="text-lg font-medium">AI智能获客</h2>
-              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-600">
-                Beta
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {aiScenarios.map((scenario) => (
-                <Card
-                  key={scenario.id}
-                  className="p-4 hover:shadow-md transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-white border-blue-200 relative group"
-                  onClick={() => handleScenarioClick(scenario.id)}
-                >
-                  <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="text-2xl mb-1">{scenario.icon}</div>
-                    <h3 className="font-medium text-sm">{scenario.name}</h3>
-                    <div className="text-xs text-gray-600">
-                      智能分析客户画像，
-                      <br />
-                      自动优化获客策略
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      今日: <span className="font-semibold text-gray-900">{scenario.todayCount}</span>
-                    </div>
-                    <div className={`text-xs font-medium flex items-center ${getGrowthColor(scenario.growthRate)}`}>
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      {formatGrowthRate(scenario.growthRate)}
-                    </div>
-                  </div>
-
-                  {/* 悬浮时显示新建按钮 */}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 px-2 text-xs bg-white"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleScenarioNewPlan(scenario.id)
-                      }}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      新建
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* 底部导航占位 */}
-      <div className="h-20"></div>
+      {/* 空状态 */}
+      {filteredScenarios.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 mb-4">
+            <Search className="h-12 w-12 mx-auto" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">未找到匹配的场景</h3>
+          <p className="text-gray-500 mb-4">尝试调整搜索条件或筛选器</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSearchTerm("")
+              setFilterCategory("all")
+            }}
+          >
+            清除筛选
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -21,7 +21,7 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
+        source: '/api/proxy/:path*',
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://ckbapi.quwanzhi.com'}/:path*`,
       },
     ]

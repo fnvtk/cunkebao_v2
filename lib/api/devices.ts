@@ -1,178 +1,359 @@
-// 设备管理API模块 - 基于存客宝API文档
-import { apiClient } from "./client"
+// 设备管理API服务
+import { API_ENDPOINTS, ERROR_CODES } from "./config"
 
-// 设备数据类型定义
+// 设备统计数据类型
+export interface DeviceStats {
+  totalDevices: number
+  onlineDevices: number
+  offlineDevices: number
+  todayAdded: number
+  weeklyGrowth: number
+  monthlyGrowth: number
+}
+
+// 设备信息类型
 export interface Device {
   id: string
   name: string
-  type: "android" | "ios"
-  status: "online" | "offline" | "error"
-  ip: string
-  version: string
-  wechatCount: number
-  lastActiveTime: string
-  createTime: string
   imei: string
-  model: string
-  battery: number
-  friendCount: number
-  todayAdded: number
-  location: string
-  employee: string
   wechatId: string
+  status: "online" | "offline"
+  friendCount: number
+  todayNewFriends: number
+  lastActiveTime: string
+  deviceType: string
+  systemVersion: string
+  appVersion: string
+  location?: string
+  tags: string[]
+  createdAt: string
+  updatedAt: string
 }
 
-export interface DeviceStats {
+// 设备列表响应类型
+export interface DeviceListResponse {
+  devices: Device[]
   total: number
-  online: number
-  offline: number
-  error: number
+  page: number
+  pageSize: number
 }
 
-export interface AddDeviceRequest {
-  name: string
-  type: "android" | "ios"
-  ip: string
-}
-
-// API响应格式
-export interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
-  success: boolean
-}
-
-// 获取设备列表
-export async function getDevices(): Promise<Device[]> {
+// 获取设备统计数据
+export async function getDeviceStats(): Promise<DeviceStats> {
   try {
-    const response = await apiClient.get<Device[]>("/api/devices")
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.STATS}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    })
 
-    // 确保返回的是数组
-    if (response.data && Array.isArray(response.data)) {
-      return response.data
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
     }
 
-    // 如果API返回的数据格式不正确，返回空数组
-    console.warn("API返回的设备数据格式不正确:", response)
-    return []
-  } catch (error) {
-    console.error("获取设备列表失败:", error)
+    const data = await response.json()
 
-    // 返回模拟数据作为降级处理，确保是数组格式
-    return [
-      {
-        id: "1",
-        name: "设备1",
-        type: "android",
-        status: "online",
-        ip: "192.168.1.100",
-        version: "Android 11",
-        wechatCount: 5,
-        lastActiveTime: "2024-01-07 14:30:00",
-        createTime: "2024-01-01 10:00:00",
-        imei: "sdt23713",
-        model: "iPhone14",
-        battery: 94,
-        friendCount: 363,
-        todayAdded: 1,
-        location: "北京",
-        employee: "员工1",
-        wechatId: "wx_001",
-      },
-      {
-        id: "2",
-        name: "设备2",
-        type: "android",
-        status: "online",
-        ip: "192.168.1.101",
-        version: "Android 12",
-        wechatCount: 3,
-        lastActiveTime: "2024-01-07 12:15:00",
-        createTime: "2024-01-02 11:00:00",
-        imei: "sdt23714",
-        model: "S23",
-        battery: 20,
-        friendCount: 202,
-        todayAdded: 30,
-        location: "上海",
-        employee: "员工2",
-        wechatId: "wx_002",
-      },
-      {
-        id: "3",
-        name: "设备3",
-        type: "ios",
-        status: "online",
-        ip: "192.168.1.102",
-        version: "iOS 16.0",
-        wechatCount: 8,
-        lastActiveTime: "2024-01-07 14:45:00",
-        createTime: "2024-01-03 09:30:00",
-        imei: "brmqmjae",
-        model: "Mi13",
-        battery: 26,
-        friendCount: 501,
-        todayAdded: 40,
-        location: "广州",
-        employee: "员工3",
-        wechatId: "wx_003",
-      },
-    ]
+    // 检查响应数据结构
+    if (data && typeof data === "object") {
+      // 如果有code字段，检查是否成功
+      if ("code" in data) {
+        if (data.code === ERROR_CODES.SUCCESS) {
+          return data.data || getDefaultDeviceStats()
+        } else {
+          console.warn("API返回错误码:", data.code, data.message)
+          return getDefaultDeviceStats()
+        }
+      }
+
+      // 如果没有code字段，直接返回数据
+      if ("totalDevices" in data) {
+        return data
+      }
+
+      // 如果有data字段，返回data
+      if ("data" in data && data.data) {
+        return data.data
+      }
+    }
+
+    // 如果数据结构不符合预期，返回默认数据
+    console.warn("API返回数据结构异常:", data)
+    return getDefaultDeviceStats()
+  } catch (error) {
+    console.error("获取设备统计失败:", error)
+    // 返回默认数据，避免页面崩溃
+    return getDefaultDeviceStats()
   }
 }
 
-// 获取设备统计
-export async function getDeviceStats(): Promise<DeviceStats> {
+// 获取设备列表
+export async function getDeviceList(
+  page = 1,
+  pageSize = 20,
+  filters?: {
+    status?: "online" | "offline" | "all"
+    keyword?: string
+    tags?: string[]
+  },
+): Promise<DeviceListResponse> {
   try {
-    const response = await apiClient.get<DeviceStats>("/api/devices/stats")
+    const params = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+    })
 
-    if (response.data) {
-      return response.data
+    if (filters?.status && filters.status !== "all") {
+      params.append("status", filters.status)
+    }
+    if (filters?.keyword) {
+      params.append("keyword", filters.keyword)
+    }
+    if (filters?.tags && filters.tags.length > 0) {
+      params.append("tags", filters.tags.join(","))
     }
 
-    // 默认统计数据
-    return { total: 0, online: 0, offline: 0, error: 0 }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.LIST}?${params}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data && data.code === ERROR_CODES.SUCCESS) {
+      return data.data || getDefaultDeviceList()
+    }
+
+    console.warn("获取设备列表失败:", data.message)
+    return getDefaultDeviceList()
   } catch (error) {
-    console.error("获取设备统计失败:", error)
-    return {
-      total: 50,
-      online: 40,
-      offline: 8,
-      error: 2,
-    }
+    console.error("获取设备列表失败:", error)
+    return getDefaultDeviceList()
   }
 }
 
 // 添加设备
-export async function addDevice(device: AddDeviceRequest): Promise<{ success: boolean; message?: string }> {
+export async function addDevice(deviceData: {
+  deviceId: string
+  name?: string
+  tags?: string[]
+}): Promise<{ success: boolean; message: string; device?: Device }> {
   try {
-    const response = await apiClient.post<any>("/api/devices", device)
-    return { success: true, message: "设备添加成功" }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.ADD}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+      body: JSON.stringify(deviceData),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data && data.code === ERROR_CODES.SUCCESS) {
+      return {
+        success: true,
+        message: "设备添加成功",
+        device: data.data,
+      }
+    }
+
+    return {
+      success: false,
+      message: data.message || "设备添加失败",
+    }
   } catch (error) {
     console.error("添加设备失败:", error)
-    return { success: false, message: "添加设备失败" }
+    return {
+      success: false,
+      message: "网络错误，请稍后重试",
+    }
   }
 }
 
 // 删除设备
-export async function deleteDevice(deviceId: string): Promise<{ success: boolean; message?: string }> {
+export async function deleteDevice(deviceId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const response = await apiClient.delete(`/api/devices/${deviceId}`)
-    return { success: true, message: "设备删除成功" }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.DELETE}/${deviceId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data && data.code === ERROR_CODES.SUCCESS) {
+      return {
+        success: true,
+        message: "设备删除成功",
+      }
+    }
+
+    return {
+      success: false,
+      message: data.message || "设备删除失败",
+    }
   } catch (error) {
     console.error("删除设备失败:", error)
-    return { success: false, message: "删除设备失败" }
+    return {
+      success: false,
+      message: "网络错误，请稍后重试",
+    }
   }
 }
 
-// 重启设备
-export async function restartDevice(deviceId: string): Promise<{ success: boolean; message?: string }> {
+// 更新设备信息
+export async function updateDevice(
+  deviceId: string,
+  updates: Partial<Device>,
+): Promise<{ success: boolean; message: string; device?: Device }> {
   try {
-    const response = await apiClient.post(`/api/devices/${deviceId}/restart`)
-    return { success: true, message: "设备重启成功" }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.UPDATE}/${deviceId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+      body: JSON.stringify(updates),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data && data.code === ERROR_CODES.SUCCESS) {
+      return {
+        success: true,
+        message: "设备更新成功",
+        device: data.data,
+      }
+    }
+
+    return {
+      success: false,
+      message: data.message || "设备更新失败",
+    }
   } catch (error) {
-    console.error("重启设备失败:", error)
-    return { success: false, message: "重启设备失败" }
+    console.error("更新设备失败:", error)
+    return {
+      success: false,
+      message: "网络错误，请稍后重试",
+    }
   }
+}
+
+// 获取设备详情
+export async function getDeviceDetail(deviceId: string): Promise<Device | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${API_ENDPOINTS.DEVICES.DETAIL}/${deviceId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data && data.code === ERROR_CODES.SUCCESS) {
+      return data.data
+    }
+
+    console.warn("获取设备详情失败:", data.message)
+    return null
+  } catch (error) {
+    console.error("获取设备详情失败:", error)
+    return null
+  }
+}
+
+// 默认设备统计数据
+function getDefaultDeviceStats(): DeviceStats {
+  return {
+    totalDevices: 50,
+    onlineDevices: 40,
+    offlineDevices: 10,
+    todayAdded: 3,
+    weeklyGrowth: 8.5,
+    monthlyGrowth: 15.2,
+  }
+}
+
+// 默认设备列表数据
+function getDefaultDeviceList(): DeviceListResponse {
+  const mockDevices: Device[] = [
+    {
+      id: "1",
+      name: "设备1",
+      imei: "sd123123",
+      wechatId: "wxid_qc924n67",
+      status: "online",
+      friendCount: 1234,
+      todayNewFriends: 5,
+      lastActiveTime: new Date().toISOString(),
+      deviceType: "Android",
+      systemVersion: "11.0",
+      appVersion: "8.0.28",
+      tags: ["主力设备"],
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      name: "设备2",
+      imei: "sd456456",
+      wechatId: "wxid_abc123",
+      status: "offline",
+      friendCount: 856,
+      todayNewFriends: 0,
+      lastActiveTime: "2024-01-19T10:30:00Z",
+      deviceType: "iOS",
+      systemVersion: "17.2",
+      appVersion: "8.0.28",
+      tags: ["备用设备"],
+      createdAt: "2024-01-02T00:00:00Z",
+      updatedAt: "2024-01-19T10:30:00Z",
+    },
+  ]
+
+  return {
+    devices: mockDevices,
+    total: mockDevices.length,
+    page: 1,
+    pageSize: 20,
+  }
+}
+
+/**
+ * 兼容旧版设备列表接口
+ * 等价于 getDeviceList() 默认取第一页
+ * @returns Device[] 设备数组
+ */
+export async function getDevices(): Promise<Device[]> {
+  const { devices } = await getDeviceList(1, 20)
+  return devices
 }

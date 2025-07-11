@@ -51,7 +51,7 @@ const mockScenarios: ScenarioData[] = [
     status: "active",
     type: "normal",
   },
-  { id: "payment", name: "付款码获客", icon: "🎨", todayCount: 78, growthRate: 9.5, status: "active", type: "normal" },
+  { id: "payment", name: "付款码获客", icon: "💳", todayCount: 78, growthRate: 9.5, status: "active", type: "normal" },
   { id: "api", name: "API获客", icon: "🔗", todayCount: 198, growthRate: 14.3, status: "active", type: "normal" },
   { id: "ai-friend", name: "AI智能加友", icon: "🤖", todayCount: 245, growthRate: 18.5, status: "active", type: "ai" },
   { id: "ai-group", name: "AI群引流", icon: "🤖", todayCount: 178, growthRate: 15.2, status: "active", type: "ai" },

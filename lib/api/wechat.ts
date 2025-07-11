@@ -1,5 +1,6 @@
 // 微信号管理API模块
 import { apiClient } from "./client"
+import { ERROR_CODES } from "./config" // 错误码常量
 
 // 微信号数据类型定义
 export interface WechatAccount {
@@ -106,15 +107,38 @@ export async function getWechatAccounts(): Promise<WechatAccount[]> {
   }
 }
 
-// 获取微信号统计
+// 获取微信号统计（带错误码判断与降级处理）
 export async function getWechatStats(): Promise<WechatStats> {
   try {
+    // 兼容 v1 接口规范：{ code: number; data: WechatStats; message?: string }
     const response = await apiClient.get("/v1/wechat/stats")
-    return (
-      response.data || { total: 0, online: 0, offline: 0, banned: 0, totalFriends: 0, totalGroups: 0, todayAdded: 0 }
-    )
+
+    // 如果服务端返回符合规范的数据
+    if (
+      response?.data &&
+      (response.data.code === undefined /* 老接口无 code 字段 */ || response.data.code === ERROR_CODES.SUCCESS)
+    ) {
+      // 兼容老接口直接返回统计数据的情况
+      const stats: WechatStats = (response.data.data as WechatStats) ?? (response.data as unknown as WechatStats)
+
+      return {
+        total: stats.total ?? 0,
+        online: stats.online ?? 0,
+        offline: stats.offline ?? 0,
+        banned: stats.banned ?? 0,
+        totalFriends: stats.totalFriends ?? 0,
+        totalGroups: stats.totalGroups ?? 0,
+        todayAdded: stats.todayAdded ?? 0,
+      }
+    }
+
+    // 若 code 不为 SUCCESS，则抛出错误以进入降级逻辑
+    throw new Error(response?.data?.message || "服务端返回错误码")
   } catch (error) {
+    // 控制台输出错误日志，但不中断页面渲染
     console.error("获取微信号统计失败:", error)
+
+    // 返回本地默认数据，确保页面可继续渲染
     return {
       total: 25,
       online: 18,

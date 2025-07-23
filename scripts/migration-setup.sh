@@ -275,5 +275,5 @@ cat > MIGRATION_GUIDE.md << 'EOF'
 ## 快速开始
 
 1. 运行开发服务器:
-   ```bash
+   \`\`\`bash
    npm run dev

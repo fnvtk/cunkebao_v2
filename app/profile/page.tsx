@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Bell, Settings, Smartphone, MessageCircle, Database, FolderOpen, ChevronRight, LogOut } from "lucide-react"
+import {
+  Bell,
+  Settings,
+  Smartphone,
+  MessageCircle,
+  Database,
+  FolderOpen,
+  ChevronRight,
+  LogOut,
+  CreditCard,
+} from "lucide-react"
 import BottomNav from "@/app/components/BottomNav"
 import { toast } from "@/components/ui/use-toast"
 import { getDeviceStats } from "@/lib/api/devices"
@@ -28,6 +38,7 @@ export default function ProfilePage() {
     name: "卡若",
     email: "zhangsan@example.com",
     role: "管理员",
+    balance: 1288.5,
     joinDate: "2023-01-15",
     lastLogin: "2024-01-20 14:30",
   }
@@ -69,6 +80,15 @@ export default function ProfilePage() {
       count: stats.content,
       path: "/content",
       bgColor: "bg-orange-50",
+    },
+    {
+      id: "billing",
+      title: "消费管理",
+      description: "查看消费记录和账户余额",
+      icon: <CreditCard className="h-5 w-5 text-indigo-500" />,
+      count: 0,
+      path: "/profile/billing",
+      bgColor: "bg-indigo-50",
     },
   ]
 
@@ -128,18 +148,30 @@ export default function ProfilePage() {
                     {userInfo.role}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{userInfo.email}</p>
+                <p className="text-sm text-gray-800 mb-1">
+                  余额: <span className="font-bold text-green-600">¥{userInfo.balance.toFixed(2)}</span>
+                </p>
                 <div className="text-xs text-gray-500">
                   <div>最近登录: {userInfo.lastLogin}</div>
                 </div>
               </div>
               <div className="flex flex-col space-y-2">
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-5 w-5" />
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => router.push("/profile/billing")}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  充值
                 </Button>
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
+                <div className="flex space-x-1">
+                  <Button variant="ghost" size="icon">
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

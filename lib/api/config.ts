@@ -139,6 +139,15 @@ export const API_ENDPOINTS = {
     HEALTH: "/system/health",
     VERSION: "/system/version",
   },
+
+  // 计费管理
+  BILLING: {
+    ACCOUNT_INFO: "/billing/account",
+    RECORDS: "/billing/records",
+    RECHARGE: "/billing/recharge",
+    CONSUME: "/billing/consume",
+    BALANCE: "/billing/balance",
+  },
 }
 
 // 本地存储键名配置

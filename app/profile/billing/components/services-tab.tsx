@@ -2,148 +2,154 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { CheckCircle, MessageSquare, Share2, Bot, HardDrive, Zap } from "lucide-react"
-import { BillingFooter } from "./billing-footer"
+import { Info, CheckCircle } from "lucide-react"
 
-const services = [
+// AI服务算力消耗标准
+const mockAIServices = [
   {
-    icon: <MessageSquare className="h-6 w-6 text-orange-500" />,
-    title: "添加好友及打招呼",
-    description: "AI智能添加好友并发送个性化打招呼消息",
-    features: ["智能筛选目标用户", "自定义打招呼消息", "自动处理好友申请"],
-    usage: 15,
-    total: 450,
-    price: 1,
+    id: "chat",
+    name: "智能对话",
+    description: "AI聊天、客服回复、内容问答",
+    powerCost: "1-5算力/次",
+    icon: "💬",
+    examples: ["客服自动回复", "智能问答", "对话生成"],
+    avgCost: 2.5,
   },
   {
-    icon: <Bot className="h-6 w-6 text-orange-500" />,
-    title: "小宝AI内容生产",
-    description: "AI采集朋友圈内容、智能改写朋友圈内容",
-    features: ["智能采集优质朋友圈内容", "AI改写发布文案", "内容质量智能评估"],
-    usage: 28,
-    total: 680,
-    price: 1,
+    id: "content",
+    name: "内容生成",
+    description: "朋友圈文案、营销内容、图文创作",
+    powerCost: "3-10算力/次",
+    icon: "✍️",
+    examples: ["朋友圈文案", "营销内容", "文章创作"],
+    avgCost: 6.5,
   },
   {
-    icon: <Share2 className="h-6 w-6 text-orange-500" />,
-    title: "智能分发服务",
-    description: "AI智能将内容分发到朋友圈，支持多账号及朋友圈",
-    features: ["智能选择最佳发布时间", "多账号批量分发", "分发效果实时监控"],
-    usage: 42,
-    total: 1250,
-    price: 1,
-  },
-]
-
-const otherServices = [
-  {
-    icon: <HardDrive className="h-6 w-6 text-gray-600" />,
-    title: "微信基础服务",
-    description: "微信号基础维护、监控和管理",
-    price: "98",
-    unit: "/月",
-    tag: "包月服务",
+    id: "analysis",
+    name: "数据分析",
+    description: "用户画像、行为分析、趋势预测",
+    powerCost: "5-15算力/次",
+    icon: "📊",
+    examples: ["用户画像", "行为分析", "数据报告"],
+    avgCost: 10.0,
   },
   {
-    icon: <Bot className="h-6 w-6 text-gray-600" />,
-    title: "专用设备买卖",
-    description: "存客宝专用手机设备",
-    price: "6,980",
-    unit: "/台",
-    tag: "一次性费用",
+    id: "automation",
+    name: "自动化服务",
+    description: "自动回复、智能分发、批量处理",
+    powerCost: "2-8算力/次",
+    icon: "🤖",
+    examples: ["自动回复", "批量处理", "智能分发"],
+    avgCost: 5.0,
   },
 ]
 
 export function ServicesTab() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="h-5 w-5 text-orange-500" />
-              AI智能服务收费
-            </CardTitle>
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-              统一1元/次
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-500">三项核心AI服务，按使用次数收费，每次1元</p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {services.map((service, index) => (
-            <div key={index} className="border rounded-lg p-4">
-              <div className="flex items-start gap-4 mb-3">
-                <div className="p-2 bg-orange-50 rounded-lg">{service.icon}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-lg">{service.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{service.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-500">¥{service.price}</p>
-                      <p className="text-xs text-gray-500">/次</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <p className="text-sm font-medium text-gray-700">功能特点:</p>
-                {service.features.map((feature, fIndex) => (
-                  <div key={fIndex} className="flex items-center gap-2 text-sm text-gray-600">
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                  <span>今日使用进度</span>
-                  <span>
-                    {service.usage} / {service.total}
-                  </span>
-                </div>
-                <Progress value={(service.usage / service.total) * 100} className="h-2" />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <HardDrive className="h-5 w-5 text-gray-600" />
-            其他相关费用
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Info className="h-5 w-5 text-blue-600" />
+            <span>AI服务算力消耗标准</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {otherServices.map((service, index) => (
-            <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
-              <div className="p-2 bg-gray-50 rounded-lg">{service.icon}</div>
-              <div className="flex-1">
-                <h3 className="font-semibold">{service.title}</h3>
-                <p className="text-sm text-gray-500">{service.description}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xl font-bold">
-                  ¥{service.price}
-                  <span className="text-sm font-normal text-gray-500">{service.unit}</span>
-                </p>
-                <Badge variant="outline" className="mt-1">
-                  {service.tag}
-                </Badge>
-              </div>
-            </div>
-          ))}
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {mockAIServices.map((service) => (
+              <Card key={service.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-5">
+                  <div className="flex items-start space-x-4">
+                    <div className="text-3xl">{service.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">{service.name}</h4>
+                        <Badge variant="outline" className="text-blue-600 border-blue-600">
+                          {service.powerCost}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{service.description}</p>
+
+                      <div className="space-y-2">
+                        <div className="text-xs text-gray-500 font-medium">应用场景：</div>
+                        <div className="flex flex-wrap gap-1">
+                          {service.examples.map((example, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {example}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="text-xs text-gray-500">平均消耗：</div>
+                        <div className="font-medium text-blue-600">{service.avgCost} 算力/次</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      <BillingFooter />
+      {/* 算力说明 */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-6">
+          <div className="flex items-start space-x-3">
+            <div className="text-blue-500 mt-0.5">💡</div>
+            <div>
+              <h4 className="font-bold text-blue-800 mb-4">算力计费说明</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2 text-sm text-blue-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>按需计费：根据实际AI服务使用量消耗算力</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-blue-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>透明计费：每次AI调用都有详细的算力消耗记录</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2 text-sm text-blue-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>永不过期：算力永久有效，随时使用无时间限制</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-blue-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>实时监控：提供详细的使用统计和消费分析</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 计费规则详情 */}
+      <Card className="bg-gray-50 border-gray-200">
+        <CardContent className="p-6">
+          <h4 className="font-bold text-gray-800 mb-4">详细计费规则</h4>
+          <div className="space-y-4 text-sm text-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="font-medium text-gray-900 mb-2">基础计费</div>
+                <div>每次AI调用根据处理复杂度和Token数量计算算力消耗</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="font-medium text-gray-900 mb-2">批量优惠</div>
+                <div>大批量调用享受算力消耗优惠，最高可节省20%</div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="font-medium text-gray-900 mb-2">失败退还</div>
+                <div>AI调用失败时，消耗的算力将自动退还到账户</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

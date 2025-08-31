@@ -1,112 +1,100 @@
 "use client"
 
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Package, Crown, Building } from "lucide-react"
-import { BillingFooter } from "./billing-footer"
 
-const packages = [
+// 算力版本套餐
+const mockVersionPackages = [
   {
-    icon: <Package className="h-8 w-8 text-gray-500" />,
-    title: "普通版本",
-    price: "免费",
-    unit: "",
-    description: "充值即可使用，包含基础AI功能",
-    features: ["基础AI服务", "标准客服支持", "基础数据统计"],
-    ctaText: "当前使用中",
-    isCurrent: true,
-    isRecommended: false,
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
+    id: "free",
+    name: "免费版本",
+    description: "基础算力服务，适合个人体验",
+    price: 0,
+    features: ["每日免费10算力", "基础AI功能", "标准客服支持"],
+    current: false,
+    icon: "🆓",
   },
   {
-    icon: <Crown className="h-8 w-8 text-purple-500" />,
-    title: "标准版本",
-    price: "98",
-    unit: "/月",
-    description: "适合中小企业，AI功能更丰富",
-    features: ["高级AI服务", "优先客服支持", "详细数据分析", "API接口访问"],
-    ctaText: "立即升级",
-    isCurrent: false,
-    isRecommended: true,
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-200",
+    id: "standard",
+    name: "标准版本",
+    description: "适合中小企业，算力使用更灵活",
+    price: 98,
+    unit: "月",
+    features: ["每月赠送500算力", "高级AI功能", "优先客服支持", "详细使用报告"],
+    current: true,
+    icon: "⭐",
   },
   {
-    icon: <Building className="h-8 w-8 text-blue-500" />,
-    title: "企业版本",
-    price: "1980",
-    unit: "/月",
-    description: "大型企业专用，定制化AI服务",
-    features: ["企业级AI服务", "专属客服经理", "定制开发服务", "私有部署支持", "SLA服务保障"],
-    ctaText: "联系销售",
-    isCurrent: false,
-    isRecommended: false,
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    id: "enterprise",
+    name: "企业版本",
+    description: "大型企业专用，无限算力支持",
+    price: 1980,
+    unit: "月",
+    features: ["每月赠送10000算力", "企业级AI服务", "专属客户经理", "定制化开发"],
+    current: false,
+    icon: "👑",
   },
 ]
 
 export function PackagesTab() {
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Crown className="h-5 w-5 text-purple-500" />
-            存客宝版本套餐
-          </CardTitle>
-          <p className="text-sm text-gray-500">选择适合的版本，享受不同级别的AI服务</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {packages.map((pkg, index) => (
-            <Card key={index} className={`relative overflow-hidden ${pkg.borderColor} ${pkg.bgColor}`}>
-              {pkg.isRecommended && <Badge className="absolute top-3 right-3 bg-purple-500 text-white">推荐</Badge>}
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="p-3 bg-white rounded-lg shadow-sm">{pkg.icon}</div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-bold">{pkg.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-3xl font-bold text-orange-500">
-                          {pkg.price === "免费" ? pkg.price : `¥${pkg.price}`}
-                          <span className="text-sm font-normal text-gray-500">{pkg.unit}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+  const handleUpgrade = (packageId: string) => {
+    console.log("升级版本:", packageId)
+  }
 
-                <div className="mb-6">
-                  <p className="font-medium text-sm text-gray-700 mb-3">包含功能:</p>
-                  <div className="space-y-2">
-                    {pkg.features.map((feature, fIndex) => (
-                      <div key={fIndex} className="flex items-center gap-2 text-sm text-gray-600">
-                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </div>
+  return (
+    <div className="space-y-5">
+      <div className="text-center mb-5">
+        <h3 className="font-medium mb-2 text-base">存客宝算力版本套餐</h3>
+        <p className="text-sm text-gray-600">选择适合的版本，享受不同级别的算力服务</p>
+      </div>
+
+      <div className="space-y-4">
+        {mockVersionPackages.map((pkg) => (
+          <Card key={pkg.id} className={`border ${pkg.current ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}>
+            <CardContent className="p-5">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="text-xl">{pkg.icon}</div>
+                    <h4 className="font-medium text-base">{pkg.name}</h4>
+                    {pkg.current && <Badge className="bg-blue-500 text-white text-xs">当前使用中</Badge>}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{pkg.description}</p>
+
+                  <div className="text-sm text-gray-500">
+                    {pkg.features.map((feature, index) => (
+                      <span key={index}>
+                        {feature}
+                        {index < pkg.features.length - 1 && " • "}
+                      </span>
                     ))}
                   </div>
                 </div>
 
-                <Button
-                  className={`w-full ${pkg.isCurrent ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
-                  disabled={pkg.isCurrent}
-                >
-                  {pkg.ctaText}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
+                <div className="text-right ml-6">
+                  {pkg.price === 0 ? (
+                    <div className="text-xl font-bold text-green-600">免费</div>
+                  ) : (
+                    <div>
+                      <div className="text-xl font-bold text-purple-600">¥{pkg.price}</div>
+                      <div className="text-sm text-gray-500">/{pkg.unit}</div>
+                    </div>
+                  )}
 
-      <BillingFooter />
+                  <Button
+                    className={`mt-3 ${pkg.current ? "bg-gray-400" : "bg-purple-500 hover:bg-purple-600"} text-white px-6`}
+                    disabled={pkg.current}
+                    onClick={() => handleUpgrade(pkg.id)}
+                  >
+                    {pkg.current ? "使用中" : "立即升级"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

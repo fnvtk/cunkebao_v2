@@ -1,73 +1,81 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
-
-// 模拟数据
-const weeklyData = [
-  { day: "周一", 获客数: 12, 添加好友: 8 },
-  { day: "周二", 获客数: 18, 添加好友: 12 },
-  { day: "周三", 获客数: 15, 添加好友: 10 },
-  { day: "周四", 获客数: 25, 添加好友: 18 },
-  { day: "周五", 获客数: 30, 添加好友: 22 },
-  { day: "周六", 获客数: 18, 添加好友: 14 },
-  { day: "周日", 获客数: 15, 添加好友: 11 },
-]
-
-const monthlyData = [
-  { day: "1月", 获客数: 120, 添加好友: 85 },
-  { day: "2月", 获客数: 180, 添加好友: 130 },
-  { day: "3月", 获客数: 150, 添加好友: 110 },
-  { day: "4月", 获客数: 250, 添加好友: 180 },
-  { day: "5月", 获客数: 300, 添加好友: 220 },
-  { day: "6月", 获客数: 280, 添加好友: 210 },
-]
+import { Badge } from "@/components/ui/badge"
+import { Smartphone, Users, TrendingUp } from "lucide-react"
 
 export function DeviceTreeChart() {
-  const [period, setPeriod] = useState("week")
+  const deviceData = [
+    {
+      id: "device-1",
+      name: "设备001",
+      status: "online",
+      acquired: 15,
+      added: 12,
+      efficiency: 80,
+    },
+    {
+      id: "device-2",
+      name: "设备002",
+      status: "online",
+      acquired: 18,
+      added: 14,
+      efficiency: 78,
+    },
+    {
+      id: "device-3",
+      name: "设备003",
+      status: "offline",
+      acquired: 12,
+      added: 6,
+      efficiency: 50,
+    },
+  ]
 
-  const data = period === "week" ? weeklyData : monthlyData
+  const getStatusColor = (status: string) => {
+    return status === "online" ? "bg-green-500" : "bg-gray-500"
+  }
+
+  const getStatusText = (status: string) => {
+    return status === "online" ? "在线" : "离线"
+  }
 
   return (
-    <Card className="w-full mt-4">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">获客趋势</CardTitle>
-          <Tabs defaultValue="week" value={period} onValueChange={setPeriod} className="h-9">
-            <TabsList className="grid w-[180px] grid-cols-2">
-              <TabsTrigger value="week">本周</TabsTrigger>
-              <TabsTrigger value="month">本月</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Smartphone className="h-5 w-5" />
+          <span>设备运行状态</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="获客数"
-              stroke="#4f46e5"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="添加好友"
-              stroke="#10b981"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="space-y-4">
+          {deviceData.map((device) => (
+            <div key={device.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <Smartphone className="h-4 w-4 text-gray-600" />
+                  <span className="font-medium">{device.name}</span>
+                </div>
+                <Badge variant="secondary" className={`${getStatusColor(device.status)} text-white`}>
+                  {getStatusText(device.status)}
+                </Badge>
+              </div>
+
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-1">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-gray-600">获客: {device.acquired}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-gray-600">添加: {device.added}</span>
+                </div>
+                <div className="text-sm text-gray-600">效率: {device.efficiency}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

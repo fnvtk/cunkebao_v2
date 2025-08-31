@@ -1,233 +1,181 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ChevronLeft } from "lucide-react"
+import { useState } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { ChevronLeft, Play, Pause, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { BasicSettings } from "../../../new/steps/BasicSettings"
-import { FriendRequestSettings } from "../../../new/steps/FriendRequestSettings"
-import { MessageSettings } from "../../../new/steps/MessageSettings"
-import { TagSettings } from "../../../new/steps/TagSettings"
-import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { BasicSettings } from "@/app/scenarios/new/steps/BasicSettings"
 import { toast } from "@/components/ui/use-toast"
-import { scenarioApi } from "@/lib/api/scenarios"
 
-const steps = [
-  { id: 1, title: "步骤一", subtitle: "基础设置" },
-  { id: 2, title: "步骤二", subtitle: "好友申请设置" },
-  { id: 3, title: "步骤三", subtitle: "消息设置" },
-  { id: 4, title: "步骤四", subtitle: "流量标签设置" },
-]
-
-export default function EditAcquisitionPlan({ params }: { params: { channel: string; id: string } }) {
+export default function EditPlanPage() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState({
-    planName: "",
-    accounts: [],
-    dailyLimit: 10,
-    enabled: true,
-    remarkType: "phone",
-    remarkKeyword: "",
-    greeting: "",
-    addFriendTimeStart: "09:00",
-    addFriendTimeEnd: "18:00",
-    addFriendInterval: 1,
-    maxDailyFriends: 20,
-    messageInterval: 1,
-    messageContent: "",
+  const params = useParams()
+  const { channel, id } = params
+
+  const [planData, setPlanData] = useState({
+    id: id as string,
+    name: "获客计划A",
+    status: "running",
+    stats: {
+      devices: 8,
+      acquired: 196,
+      added: 196,
+      passRate: 100,
+    },
+    lastExecution: "2024-02-09 15:30",
+    nextExecution: "2024-02-09 17:25:36",
+    settings: {
+      planName: "获客计划A",
+      scenario: channel as string,
+      actionType: "click_receive",
+      enabled: true,
+    },
   })
 
-  useEffect(() => {
-    const fetchPlanData = async () => {
-      setLoading(true)
-      const response = await scenarioApi.getById(params.id)
-      if (response.code === 0 && response.data) {
-        // 假设返回的数据结构与 formData 兼容
-        setFormData(response.data as any)
-      } else {
-        toast({
-          title: "加载失败",
-          description: response.message || "获取计划数据失败，请重试",
-          variant: "destructive",
-        })
-      }
-      setLoading(false)
-    }
+  const [isRunning, setIsRunning] = useState(planData.status === "running")
 
-    if (params.id) {
-      fetchPlanData()
-    }
-  }, [params.id])
+  const handleToggleStatus = () => {
+    const newStatus = isRunning ? "paused" : "running"
+    setIsRunning(!isRunning)
+    setPlanData((prev) => ({ ...prev, status: newStatus }))
 
-  const handleSave = async () => {
-    try {
-      const response = await scenarioApi.update({ id: params.id, ...formData })
-      if (response.code === 0) {
-        toast({
-          title: "保存成功",
-          description: "获客计划已更新",
-        })
-        router.push(`/scenarios/${params.channel}`)
-      } else {
-        toast({
-          title: "保存失败",
-          description: response.message,
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    toast({
+      title: isRunning ? "计划已暂停" : "计划已启动",
+      description: `"${planData.name}" ${isRunning ? "已暂停执行" : "已开始执行"}`,
+    })
+  }
+
+  const handleDelete = () => {
+    if (confirm("确定要删除这个计划吗？")) {
       toast({
-        title: "保存失败",
-        description: "更新计划失败，请重试",
-        variant: "destructive",
+        title: "计划已删除",
+        description: `"${planData.name}" 已被删除`,
       })
+      router.push(`/scenarios/${channel}`)
     }
   }
 
-  const handlePrev = () => {
-    setCurrentStep((prevStep) => Math.max(prevStep - 1, 1))
+  const handleSettingsUpdate = (newSettings: any) => {
+    setPlanData((prev) => ({
+      ...prev,
+      settings: newSettings,
+      name: newSettings.planName,
+    }))
   }
 
-  const handleNext = () => {
-    if (isStepValid()) {
-      if (currentStep === steps.length) {
-        handleSave()
-      } else {
-        setCurrentStep((prevStep) => Math.min(prevStep + 1, steps.length))
-      }
+  const getStatusColor = (status: string) => {
+    return status === "running" ? "bg-green-500 text-white" : "bg-gray-400 text-white"
+  }
+
+  const getStatusText = (status: string) => {
+    return status === "running" ? "进行中" : "已暂停"
+  }
+
+  const getChannelName = (channel: string) => {
+    const channelNames: { [key: string]: string } = {
+      douyin: "抖音获客",
+      weixinqun: "微信群获客",
+      payment: "付款码获客",
+      poster: "海报获客",
+      phone: "电话获客",
     }
-  }
-
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 1:
-        if (!formData.planName.trim() || formData.accounts.length === 0) {
-          toast({
-            title: "请完善信息",
-            description: "请填写计划名称并选择至少一个账号",
-            variant: "destructive",
-          })
-          return false
-        }
-        return true
-      case 2:
-        if (!formData.greeting.trim()) {
-          toast({
-            title: "请完善信息",
-            description: "请填写好友申请信息",
-            variant: "destructive",
-          })
-          return false
-        }
-        return true
-      case 3:
-        if (!formData.messageContent.trim()) {
-          toast({
-            title: "请完善信息",
-            description: "请填写消息内容",
-            variant: "destructive",
-          })
-          return false
-        }
-        return true
-      case 4:
-        return true
-      default:
-        return true
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">加载中...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return <BasicSettings formData={formData} onChange={setFormData} onNext={handleNext} isEdit />
-      case 2:
-        return (
-          <FriendRequestSettings formData={formData} onChange={setFormData} onNext={handleNext} onPrev={handlePrev} />
-        )
-      case 3:
-        return <MessageSettings formData={formData} onChange={setFormData} onNext={handleNext} onPrev={handlePrev} />
-      case 4:
-        return <TagSettings formData={formData} onChange={setFormData} onNext={handleSave} onPrev={handlePrev} />
-      default:
-        return null
-    }
+    return channelNames[channel] || "获客"
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[390px] mx-auto bg-white min-h-screen flex flex-col">
-        <header className="sticky top-0 z-10 bg-white border-b">
-          <div className="flex items-center h-14 px-4">
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* 头部 */}
+      <header className="sticky top-0 z-10 bg-white border-b">
+        <div className="flex items-center justify-between h-14 px-4">
+          <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5 text-blue-500" />
             </Button>
-            <h1 className="ml-2 text-lg font-medium">编辑获客计划</h1>
+            <h1 className="ml-2 text-lg font-medium text-blue-500">编辑{getChannelName(channel as string)}计划</h1>
           </div>
-        </header>
-
-        <div className="flex-1 flex flex-col">
-          <div className="px-4 py-6">
-            <div className="relative flex justify-between">
-              {steps.map((step) => (
-                <div
-                  key={step.id}
-                  className={cn(
-                    "flex flex-col items-center relative z-10",
-                    currentStep >= step.id ? "text-blue-600" : "text-gray-400",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors",
-                      currentStep >= step.id
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-400",
-                    )}
-                  >
-                    {step.id}
-                  </div>
-                  <div className="text-xs mt-1">{step.title}</div>
-                  <div className="text-xs mt-0.5 font-medium">{step.subtitle}</div>
-                </div>
-              ))}
-              <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 -z-10">
-                <div
-                  className="absolute top-0 left-0 h-full bg-blue-600 transition-all duration-300"
-                  style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 px-4 pb-20">{renderStepContent()}</div>
-
-          <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4">
-            <div className="flex justify-between max-w-[390px] mx-auto">
-              {currentStep > 1 && (
-                <Button variant="outline" onClick={handlePrev}>
-                  上一步
-                </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={handleToggleStatus}>
+              {isRunning ? (
+                <>
+                  <Pause className="h-4 w-4 mr-1" />
+                  暂停
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-1" />
+                  启动
+                </>
               )}
-              <Button className={cn("min-w-[120px]", currentStep === 1 ? "w-full" : "ml-auto")} onClick={handleNext}>
-                {currentStep === steps.length ? "保存" : "下一步"}
-              </Button>
-            </div>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-700 bg-transparent"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              删除
+            </Button>
           </div>
         </div>
+      </header>
+
+      {/* 内容区域 */}
+      <div className="flex-1 p-4">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">计划概览</TabsTrigger>
+            <TabsTrigger value="settings">计划设置</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            {/* 计划信息卡片 */}
+            <Card className="bg-white rounded-xl shadow-sm border-0">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{planData.name}</CardTitle>
+                  <Badge className={`${getStatusColor(planData.status)} px-2 py-1 text-xs rounded-full`}>
+                    {getStatusText(planData.status)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* 统计数据网格 */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">设备数</div>
+                    <div className="text-2xl font-bold text-gray-900">{planData.stats.devices}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">已获客</div>
+                    <div className="text-2xl font-bold text-gray-900">{planData.stats.acquired}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">已添加</div>
+                    <div className="text-2xl font-bold text-gray-900">{planData.stats.added}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">通过率</div>
+                    <div className="text-2xl font-bold text-gray-900">{planData.stats.passRate}%</div>
+                  </div>
+                </div>
+
+                {/* 执行时间信息 */}
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div>上次执行: {planData.lastExecution}</div>
+                  <div>下次执行: {planData.nextExecution}</div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4">
+            <BasicSettings data={planData.settings} onUpdate={handleSettingsUpdate} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

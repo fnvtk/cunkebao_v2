@@ -1,232 +1,260 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft, Plus, Search, RefreshCw, MoreVertical, QrCode } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Settings, Users, MessageSquare, TrendingUp, Calendar } from "lucide-react"
-import Link from "next/link"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "@/components/ui/use-toast"
 
-// 微信群获客计划数据
-const wechatGroupPlans = [
+// 模拟数据 - 微信群获客
+const mockWechatGroupPlans = [
   {
-    id: 1,
+    id: "202588",
     name: "产品推广群计划",
-    status: "运行中",
-    groupCount: 8,
-    memberCount: 1250,
-    dailyMessages: 15,
-    tags: ["产品分享", "优惠信息"],
-    createdAt: "2024-01-15",
-    lastActive: "2小时前",
+    status: "running",
+    stats: {
+      devices: 2,
+      acquired: 0,
+      added: 0,
+      passRate: 0,
+    },
+    lastExecution: "--",
   },
   {
-    id: 2,
+    id: "202587",
     name: "用户交流群计划",
-    status: "已暂停",
-    groupCount: 5,
-    memberCount: 680,
-    dailyMessages: 8,
-    tags: ["用户交流", "答疑解惑"],
-    createdAt: "2024-01-10",
-    lastActive: "1天前",
+    status: "paused",
+    stats: {
+      devices: 5,
+      acquired: 680,
+      added: 612,
+      passRate: 90,
+    },
+    lastExecution: "2024-02-08 18:30",
   },
   {
-    id: 3,
+    id: "202586",
     name: "新人欢迎群计划",
-    status: "运行中",
-    groupCount: 12,
-    memberCount: 2100,
-    dailyMessages: 25,
-    tags: ["新人欢迎", "群活动"],
-    createdAt: "2024-01-08",
-    lastActive: "30分钟前",
+    status: "running",
+    stats: {
+      devices: 12,
+      acquired: 2100,
+      added: 1890,
+      passRate: 90,
+    },
+    lastExecution: "2024-02-09 15:45",
   },
 ]
 
 export default function WechatGroupPage() {
-  const [plans] = useState(wechatGroupPlans)
+  const router = useRouter()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [plans, setPlans] = useState(mockWechatGroupPlans)
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "运行中":
-        return "bg-green-100 text-green-800"
-      case "已暂停":
-        return "bg-yellow-100 text-yellow-800"
-      case "已完成":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+    return status === "running" ? "bg-green-500 text-white" : "bg-gray-400 text-white"
+  }
+
+  const getStatusText = (status: string) => {
+    return status === "running" ? "进行中" : "已暂停"
+  }
+
+  const handleRefresh = () => {
+    // 模拟刷新数据
+    toast({
+      title: "刷新成功",
+      description: "数据已更新",
+    })
+  }
+
+  const handleMenuAction = (action: string, planId: string) => {
+    switch (action) {
+      case "edit":
+        router.push(`/scenarios/weixinqun/edit/${planId}`)
+        break
+      case "copy":
+        const originalPlan = plans.find((p) => p.id === planId)
+        if (originalPlan) {
+          const newPlan = {
+            ...originalPlan,
+            id: `${Date.now()}`,
+            name: `${originalPlan.name} - 副本`,
+            status: "paused" as const,
+            stats: { ...originalPlan.stats, acquired: 0, added: 0, passRate: 0 },
+          }
+          setPlans([...plans, newPlan])
+          toast({
+            title: "复制成功",
+            description: "计划已复制",
+          })
+        }
+        break
+      case "delete":
+        if (confirm("确定要删除这个计划吗？")) {
+          setPlans(plans.filter((p) => p.id !== planId))
+          toast({
+            title: "删除成功",
+            description: "计划已删除",
+          })
+        }
+        break
     }
   }
 
-  const getTagColor = (tag: string) => {
-    const colors = {
-      群活动: "bg-green-100 text-green-800",
-      产品分享: "bg-blue-100 text-blue-800",
-      用户��流: "bg-purple-100 text-purple-800",
-      优惠信息: "bg-pink-100 text-pink-800",
-      答疑解惑: "bg-orange-100 text-orange-800",
-      新人欢迎: "bg-cyan-100 text-cyan-800",
-      群规通知: "bg-indigo-100 text-indigo-800",
-      活跃互动: "bg-emerald-100 text-emerald-800",
-    }
-    return colors[tag as keyof typeof colors] || "bg-gray-100 text-gray-800"
-  }
+  const filteredPlans = plans.filter(
+    (plan) =>
+      plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      plan.id.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* 头部 */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">微信群获客</h1>
-              <p className="text-sm text-gray-600 mt-1">管理微信群获客计划，提升群活跃度</p>
-            </div>
-            <Link href="/plans/new?type=weixinqun">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                新建计划
-              </Button>
-            </Link>
+      <header className="sticky top-0 z-10 bg-white border-b">
+        <div className="flex items-center justify-between h-14 px-4">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ChevronLeft className="h-5 w-5 text-blue-500" />
+            </Button>
+            <h1 className="ml-2 text-lg font-medium text-blue-500">微信群获客</h1>
           </div>
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+            onClick={() => router.push("/scenarios/weixinqun/new")}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            新建计划
+          </Button>
+        </div>
+      </header>
+
+      {/* 搜索栏 */}
+      <div className="p-4">
+        <div className="flex items-center space-x-3">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="搜索计划名称"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white border-gray-200 rounded-full"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            className="rounded-full bg-white border-gray-200"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <Users className="w-8 h-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">总群数</p>
-                  <p className="text-xl font-semibold">25</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <MessageSquare className="w-8 h-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">总成员</p>
-                  <p className="text-xl font-semibold">4,030</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">日均消息</p>
-                  <p className="text-xl font-semibold">48</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center">
-                <Calendar className="w-8 h-8 text-orange-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">活跃计划</p>
-                  <p className="text-xl font-semibold">2</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 计划列表 */}
+      {/* 计划列表 */}
+      <div className="flex-1 px-4 pb-20">
         <div className="space-y-4">
-          {plans.map((plan) => (
-            <Card key={plan.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(plan.status)}>{plan.status}</Badge>
-                    <Button variant="ghost" size="sm">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">群数量</p>
-                    <p className="font-semibold">{plan.groupCount} 个</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">成员数</p>
-                    <p className="font-semibold">{plan.memberCount.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">日均消息</p>
-                    <p className="font-semibold">{plan.dailyMessages} 条</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">最后活跃</p>
-                    <p className="font-semibold">{plan.lastActive}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {plan.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className={getTagColor(tag)}>
-                      {tag}
+          {filteredPlans.map((plan) => (
+            <Card key={plan.id} className="bg-white rounded-xl shadow-sm border-0">
+              <CardContent className="p-4">
+                {/* 计划标题行 */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <h3 className="text-lg font-medium text-gray-900">{plan.id}</h3>
+                    <Badge className={`${getStatusColor(plan.status)} px-2 py-1 text-xs rounded-full`}>
+                      {getStatusText(plan.status)}
                     </Badge>
-                  ))}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleMenuAction("edit", plan.id)}>编辑计划</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleMenuAction("copy", plan.id)}>复制计划</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleMenuAction("delete", plan.id)} className="text-red-600">
+                        删除计划
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>创建时间：{plan.createdAt}</span>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      查看详情
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      编辑计划
-                    </Button>
+                {/* 统计数据网格 */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">设备数</div>
+                    <div className="text-2xl font-bold text-gray-900">{plan.stats.devices}</div>
                   </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">已获客</div>
+                    <div className="text-2xl font-bold text-gray-900">{plan.stats.acquired}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">已添加</div>
+                    <div className="text-2xl font-bold text-gray-900">{plan.stats.added}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <div className="text-xs text-gray-500 mb-1">通过率</div>
+                    <div className="text-2xl font-bold text-gray-900">{plan.stats.passRate}%</div>
+                  </div>
+                </div>
+
+                {/* 底部信息 */}
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center space-x-1">
+                    <span>上次执行: {plan.lastExecution}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <QrCode className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      </div>
 
-      {/* 底部导航 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
-        <div className="grid grid-cols-4 py-2">
-          <Link href="/" className="flex flex-col items-center py-2 text-gray-600">
-            <div className="w-6 h-6 mb-1">🏠</div>
-            <span className="text-xs">首页</span>
-          </Link>
-          <Link href="/scenarios" className="flex flex-col items-center py-2 text-blue-600">
-            <div className="w-6 h-6 mb-1">🎯</div>
-            <span className="text-xs">场景获客</span>
-          </Link>
-          <Link href="/workspace" className="flex flex-col items-center py-2 text-gray-600">
-            <div className="w-6 h-6 mb-1">💼</div>
-            <span className="text-xs">工作台</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center py-2 text-gray-600">
-            <div className="w-6 h-6 mb-1">👤</div>
-            <span className="text-xs">我的</span>
-          </Link>
-        </div>
+        {/* 空状态 */}
+        {filteredPlans.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <Plus className="h-8 w-8" />
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-600 mb-2">暂无计划</h3>
+            <p className="text-gray-500 mb-6">{searchTerm ? "没有找到匹配的计划" : "创建您的第一个微信群获客计划"}</p>
+            {!searchTerm && (
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => router.push("/scenarios/weixinqun/new")}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                新建计划
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* 分页器 */}
+        {filteredPlans.length > 0 && (
+          <div className="flex justify-center mt-6">
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button className="bg-blue-500 text-white h-8 w-8 rounded">1</Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ChevronLeft className="h-4 w-4 rotate-180" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

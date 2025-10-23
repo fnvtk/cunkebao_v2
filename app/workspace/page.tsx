@@ -6,7 +6,19 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { ThumbsUp, Clock, Send, Users, Share2, MessageSquare, BarChart3, Target, TrendingUp } from "lucide-react"
+import {
+  ThumbsUp,
+  Clock,
+  Send,
+  Users,
+  Share2,
+  MessageSquare,
+  BarChart3,
+  Target,
+  TrendingUp,
+  Brain,
+  BookOpen,
+} from "lucide-react"
 
 // 功能项数据类型
 interface WorkspaceFunction {
@@ -110,6 +122,25 @@ const aiFunctions: WorkspaceFunction[] = [
     path: "/workspace/ai-prediction",
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
+  },
+  {
+    id: "ai-models",
+    title: "AI模型数据",
+    description: "查看AI模型训练和性能数据",
+    icon: <Brain className="w-6 h-6" />,
+    path: "/workspace/ai-models",
+    color: "text-cyan-600",
+    bgColor: "bg-cyan-50",
+  },
+  {
+    id: "ai-knowledge-base",
+    title: "AI知识库",
+    description: "管理AI助手的知识资料",
+    icon: <BookOpen className="w-6 h-6" />,
+    path: "/workspace/ai-knowledge-base",
+    isNew: true,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
   },
 ]
 

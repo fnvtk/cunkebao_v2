@@ -1,150 +1,237 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Settings, Smartphone, Users, Layers, FolderOpen, ChevronRight } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-// 模拟用户数据 - 保持与整个项目一致
-const mockUserData = {
-  name: "卡若",
-  role: "管理员",
-  balance: 1288.5,
-  lastLogin: "2025/7/29 20:33:11",
-  avatar: "/placeholder.svg?height=60&width=60",
-}
-
-// 模拟统计数据 - 与其他页面保持一致
-const mockStats = {
-  devices: 8, // 设备总数
-  wechatAccounts: 17, // 微信号总数
-  trafficPool: 999, // 流量池用户数
-  contentLibrary: 999, // 内容库数量
-}
+import {
+  ChevronLeft,
+  Smartphone,
+  MessageCircle,
+  Users,
+  BookOpen,
+  ChevronRight,
+  Settings,
+  Bell,
+  HelpCircle,
+  LogOut,
+  Wallet,
+} from "lucide-react"
 
 export default function ProfilePage() {
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
-  const handleNavigation = (path: string) => {
-    router.push(path)
+  // 模拟用户数据
+  const userData = {
+    name: "张三",
+    phone: "138****8888",
+    avatar: "/placeholder.svg?height=80&width=80",
+    level: "VIP会员",
+    stats: {
+      devices: 12,
+      wechatAccounts: 24,
+      trafficPool: 1847,
+      contentLibrary: 156,
+      aiModels: 12,
+    },
   }
 
-  const menuItems = [
+  useEffect(() => {
+    // 模拟加载
+    setTimeout(() => setLoading(false), 500)
+  }, [])
+
+  // 主要功能列表
+  const mainFeatures = [
     {
       id: "devices",
+      icon: <Smartphone className="h-6 w-6 text-blue-600" />,
       title: "设备管理",
-      description: "管理您的设备和微信账号",
-      icon: <Smartphone className="h-6 w-6 text-blue-500" />,
-      count: mockStats.devices,
-      path: "/devices",
+      description: "管理所有设备和状态",
+      value: userData.stats.devices,
+      color: "bg-blue-50",
+      route: "/profile/devices",
     },
     {
       id: "wechat",
+      icon: <MessageCircle className="h-6 w-6 text-green-600" />,
       title: "微信号管理",
       description: "管理微信账号和好友",
-      icon: <Users className="h-6 w-6 text-green-500" />,
-      count: mockStats.wechatAccounts,
-      path: "/wechat-accounts",
+      value: userData.stats.wechatAccounts,
+      color: "bg-green-50",
+      route: "/wechat-accounts",
     },
     {
       id: "traffic",
+      icon: <Users className="h-6 w-6 text-purple-600" />,
       title: "流量池",
-      description: "管理用户流量池和分组",
-      icon: <Layers className="h-6 w-6 text-purple-500" />,
-      count: mockStats.trafficPool,
-      path: "/traffic-pool",
+      description: "查看和管理客户分组",
+      value: userData.stats.trafficPool,
+      color: "bg-purple-50",
+      route: "/profile/traffic-pool",
     },
     {
       id: "content",
+      icon: <BookOpen className="h-6 w-6 text-orange-600" />,
       title: "内容库",
-      description: "管理营销内容和素材",
-      icon: <FolderOpen className="h-6 w-6 text-orange-500" />,
-      count: mockStats.contentLibrary,
-      path: "/content",
+      description: "管理营销内容素材",
+      value: userData.stats.contentLibrary,
+      color: "bg-orange-50",
+      route: "/content",
     },
   ]
 
+  // 其他功能列表
+  const otherFeatures = [
+    {
+      id: "billing",
+      icon: <Wallet className="h-5 w-5 text-cyan-600" />,
+      title: "算力管理",
+      description: "查看算力使用和购买套餐",
+      route: "/profile/billing",
+    },
+    {
+      id: "settings",
+      icon: <Settings className="h-5 w-5 text-gray-600" />,
+      title: "设置",
+      description: "账号和系统设置",
+      route: "/profile/settings",
+    },
+    {
+      id: "notifications",
+      icon: <Bell className="h-5 w-5 text-yellow-600" />,
+      title: "通知中心",
+      description: "查看系统通知和消息",
+      route: "/profile/notifications",
+    },
+    {
+      id: "help",
+      icon: <HelpCircle className="h-5 w-5 text-blue-600" />,
+      title: "帮助与反馈",
+      description: "使用帮助和问题反馈",
+      route: "/profile/help",
+    },
+  ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* 顶部导航 */}
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="flex items-center justify-between h-14 px-4">
-          <div className="flex items-center">
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-5 w-5 text-blue-500" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h1 className="ml-2 text-lg font-medium text-blue-500">我的</h1>
+            <h1 className="text-lg font-medium">我的</h1>
           </div>
         </div>
-      </header>
-
-      {/* 用户信息卡片 */}
-      <div className="p-4">
-        <Card className="bg-white shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={mockUserData.avatar || "/placeholder.svg"} alt={mockUserData.name} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
-                    {mockUserData.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-lg font-medium text-gray-900">{mockUserData.name}</h2>
-                    <Badge className="bg-orange-100 text-orange-600 text-xs">{mockUserData.role}</Badge>
-                  </div>
-                  <div className="flex items-center space-x-4 mt-1">
-                    <span className="text-sm text-gray-600">
-                      余额: <span className="text-green-600 font-medium">¥{mockUserData.balance}</span>
-                    </span>
-                    <Button
-                      size="sm"
-                      className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 h-7"
-                      onClick={() => handleNavigation("/profile/billing")}
-                    >
-                      充值
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => handleNavigation("/profile/settings")}>
-                <Settings className="h-5 w-5 text-gray-400" />
-              </Button>
-            </div>
-            <div className="mt-3 pt-3 border-t text-xs text-gray-500">最近登录: {mockUserData.lastLogin}</div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* 功能菜单 */}
-      <div className="px-4 space-y-3">
-        {menuItems.map((item) => (
+      {/* 用户信息卡片 */}
+      <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-6">
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
+            <AvatarImage src={userData.avatar || "/placeholder.svg"} alt={userData.name} />
+            <AvatarFallback className="text-2xl bg-white text-blue-600">{userData.name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 text-white">
+            <div className="flex items-center space-x-2 mb-1">
+              <h2 className="text-xl font-bold">{userData.name}</h2>
+              <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-xs">{userData.level}</span>
+            </div>
+            <p className="text-white/90 text-sm">{userData.phone}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20"
+            onClick={() => router.push("/profile/edit")}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* 主要功能区 */}
+      <div className="p-4 space-y-3">
+        <div className="text-sm font-medium text-gray-900 px-1">核心功能</div>
+        {mainFeatures.map((feature) => (
           <Card
-            key={item.id}
-            className="bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleNavigation(item.path)}
+            key={feature.id}
+            className="cursor-pointer hover:shadow-md transition-all"
+            onClick={() => router.push(feature.route)}
           >
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gray-50 rounded-lg">{item.icon}</div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{item.title}</h3>
-                    <p className="text-sm text-gray-500">{item.description}</p>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className={`flex-shrink-0 w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center`}>
+                  {feature.icon}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-blue-600">{item.count}</span>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium text-gray-900">{feature.title}</h3>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-blue-600">{feature.value}</span>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">{feature.description}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* 其他功能区 */}
+      <div className="p-4 space-y-3">
+        <div className="text-sm font-medium text-gray-900 px-1">其他功能</div>
+        <Card>
+          <CardContent className="p-0">
+            {otherFeatures.map((feature, index) => (
+              <div
+                key={feature.id}
+                className={`flex items-center space-x-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  index !== otherFeatures.length - 1 ? "border-b" : ""
+                }`}
+                onClick={() => router.push(feature.route)}
+              >
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  {feature.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900">{feature.title}</div>
+                  <div className="text-sm text-gray-500">{feature.description}</div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 退出登录 */}
+      <div className="p-4">
+        <Button
+          variant="outline"
+          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-transparent"
+          onClick={() => {
+            // 这里添加退出登录逻辑
+            router.push("/login")
+          }}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          退出登录
+        </Button>
       </div>
     </div>
   )

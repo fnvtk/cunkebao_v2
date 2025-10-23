@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, Plus, Search, Filter, RefreshCw } from "lucide-react"
+import { ChevronLeft, Plus, Search, Filter, RefreshCw, Smartphone } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
@@ -40,63 +40,148 @@ interface DeviceStats {
   offline: number
 }
 
-// API基础URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://ckbapi.quwanzhi.com"
+// 模拟设备数据
+const MOCK_DEVICES: Device[] = [
+  {
+    id: "1",
+    name: "设备 1",
+    imei: "sd123123",
+    wechatId: "wxid_qc924n67",
+    friendCount: 649,
+    todayAdded: 43,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:30:00",
+    createTime: "2024-01-01 10:00:00",
+  },
+  {
+    id: "2",
+    name: "设备 2",
+    imei: "sd123124",
+    wechatId: "wxid_kwjazkzd",
+    friendCount: 124,
+    todayAdded: 34,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:25:00",
+    createTime: "2024-01-02 11:00:00",
+  },
+  {
+    id: "3",
+    name: "设备 3",
+    imei: "sd123125",
+    wechatId: "wxid_6t25lkdf",
+    friendCount: 295,
+    todayAdded: 5,
+    status: "online",
+    type: "ios",
+    lastActive: "2024-01-07 14:20:00",
+    createTime: "2024-01-03 09:30:00",
+  },
+  {
+    id: "4",
+    name: "设备 4",
+    imei: "sd123126",
+    wechatId: "wxid_tvbojpy2",
+    friendCount: 864,
+    todayAdded: 36,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:15:00",
+    createTime: "2024-01-04 08:00:00",
+  },
+  {
+    id: "5",
+    name: "设备 5",
+    imei: "sd123127",
+    wechatId: "wxid_8qi6bqqi",
+    friendCount: 426,
+    todayAdded: 12,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:10:00",
+    createTime: "2024-01-05 10:30:00",
+  },
+  {
+    id: "6",
+    name: "设备 6",
+    imei: "sd123128",
+    wechatId: "wxid_icuybkc0",
+    friendCount: 882,
+    todayAdded: 15,
+    status: "offline",
+    type: "ios",
+    lastActive: "2024-01-07 12:00:00",
+    createTime: "2024-01-06 14:00:00",
+  },
+  {
+    id: "7",
+    name: "设备 7",
+    imei: "sd123129",
+    wechatId: "wxid_17hf7xl",
+    friendCount: 133,
+    todayAdded: 28,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:05:00",
+    createTime: "2024-01-07 09:00:00",
+  },
+  {
+    id: "8",
+    name: "设备 8",
+    imei: "sd123130",
+    wechatId: "wxid_ame2tiyd",
+    friendCount: 600,
+    todayAdded: 22,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 14:00:00",
+    createTime: "2024-01-08 11:30:00",
+  },
+  {
+    id: "9",
+    name: "设备 9",
+    imei: "sd123131",
+    wechatId: "wxid_gjrimgjk",
+    friendCount: 19,
+    todayAdded: 30,
+    status: "online",
+    type: "ios",
+    lastActive: "2024-01-07 13:55:00",
+    createTime: "2024-01-09 10:00:00",
+  },
+  {
+    id: "10",
+    name: "设备 10",
+    imei: "sd123132",
+    wechatId: "wxid_g37f8e0j",
+    friendCount: 58,
+    todayAdded: 6,
+    status: "online",
+    type: "android",
+    lastActive: "2024-01-07 13:50:00",
+    createTime: "2024-01-10 12:00:00",
+  },
+]
 
-// 统一的API请求客户端
-async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  try {
-    const token = localStorage.getItem("ckb_token")
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...((options.headers as Record<string, string>) || {}),
-    }
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-      mode: "cors",
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("服务器返回了非JSON格式的数据")
-    }
-
-    const data = await response.json()
-
-    if (data.code && data.code !== 200 && data.code !== 0) {
-      throw new Error(data.message || "请求失败")
-    }
-
-    return data.data || data
-  } catch (error) {
-    console.error("API请求失败:", error)
-    throw error
-  }
+const MOCK_STATS: DeviceStats = {
+  total: 50,
+  online: 40,
+  offline: 10,
 }
 
 export default function DevicesPage() {
   const { toast } = useToast()
   const router = useRouter()
   const [devices, setDevices] = useState<Device[]>([])
-  const [stats, setStats] = useState<DeviceStats>({ total: 0, online: 0, offline: 0 })
-  const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState<DeviceStats>(MOCK_STATS)
+  const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all")
   const [selectedDevices, setSelectedDevices] = useState<string[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(5)
   const [newDevice, setNewDevice] = useState({
     name: "",
     type: "android" as "android" | "ios",
@@ -104,173 +189,19 @@ export default function DevicesPage() {
     remark: "",
   })
 
-  // 加载设备列表
+  // 加载设备列表 - 直接使用模拟数据
   const loadDevices = async (page = 1) => {
-    try {
-      setIsLoading(true)
+    setIsLoading(true)
 
-      // 并行请求设备列表和统计数据
-      const [devicesResult, statsResult] = await Promise.allSettled([
-        apiRequest<{
-          devices: Device[]
-          total: number
-          page: number
-          totalPages: number
-        }>(`${API_BASE_URL}/v1/devices?page=${page}&limit=10&search=${searchTerm}&status=${statusFilter}`),
-        apiRequest<DeviceStats>(`${API_BASE_URL}/v1/devices/stats`),
-      ])
+    // 模拟延迟
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // 处理设备列表数据
-      if (devicesResult.status === "fulfilled") {
-        setDevices(devicesResult.value.devices || [])
-        setCurrentPage(devicesResult.value.page || 1)
-        setTotalPages(devicesResult.value.totalPages || 1)
-      } else {
-        console.warn("获取设备列表失败:", devicesResult.reason)
-        // 使用模拟数据
-        const mockDevices: Device[] = [
-          {
-            id: "1",
-            name: "设备 1",
-            imei: "sd123123",
-            wechatId: "wxid_qc924n67",
-            friendCount: 649,
-            todayAdded: 43,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:30:00",
-            createTime: "2024-01-01 10:00:00",
-          },
-          {
-            id: "2",
-            name: "设备 2",
-            imei: "sd123124",
-            wechatId: "wxid_kwjazkzd",
-            friendCount: 124,
-            todayAdded: 34,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:25:00",
-            createTime: "2024-01-02 11:00:00",
-          },
-          {
-            id: "3",
-            name: "设备 3",
-            imei: "sd123125",
-            wechatId: "wxid_6t25lkdf",
-            friendCount: 295,
-            todayAdded: 5,
-            status: "online",
-            type: "ios",
-            lastActive: "2024-01-07 14:20:00",
-            createTime: "2024-01-03 09:30:00",
-          },
-          {
-            id: "4",
-            name: "设备 4",
-            imei: "sd123126",
-            wechatId: "wxid_tvbojpy2",
-            friendCount: 864,
-            todayAdded: 36,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:15:00",
-            createTime: "2024-01-04 08:00:00",
-          },
-          {
-            id: "5",
-            name: "设备 5",
-            imei: "sd123127",
-            wechatId: "wxid_8qi6bqqi",
-            friendCount: 426,
-            todayAdded: 12,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:10:00",
-            createTime: "2024-01-05 10:30:00",
-          },
-          {
-            id: "6",
-            name: "设备 6",
-            imei: "sd123128",
-            wechatId: "wxid_icuybkc0",
-            friendCount: 882,
-            todayAdded: 15,
-            status: "offline",
-            type: "ios",
-            lastActive: "2024-01-07 12:00:00",
-            createTime: "2024-01-06 14:00:00",
-          },
-          {
-            id: "7",
-            name: "设备 7",
-            imei: "sd123129",
-            wechatId: "wxid_17hf7xl",
-            friendCount: 133,
-            todayAdded: 28,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:05:00",
-            createTime: "2024-01-07 09:00:00",
-          },
-          {
-            id: "8",
-            name: "设备 8",
-            imei: "sd123130",
-            wechatId: "wxid_ame2tiyd",
-            friendCount: 600,
-            todayAdded: 22,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 14:00:00",
-            createTime: "2024-01-08 11:30:00",
-          },
-          {
-            id: "9",
-            name: "设备 9",
-            imei: "sd123131",
-            wechatId: "wxid_gjrimgjk",
-            friendCount: 19,
-            todayAdded: 30,
-            status: "online",
-            type: "ios",
-            lastActive: "2024-01-07 13:55:00",
-            createTime: "2024-01-09 10:00:00",
-          },
-          {
-            id: "10",
-            name: "设备 10",
-            imei: "sd123132",
-            wechatId: "wxid_g37f8e0j",
-            friendCount: 58,
-            todayAdded: 6,
-            status: "online",
-            type: "android",
-            lastActive: "2024-01-07 13:50:00",
-            createTime: "2024-01-10 12:00:00",
-          },
-        ]
-        setDevices(mockDevices)
-        setTotalPages(5)
-      }
-
-      // 处理统计数据
-      if (statsResult.status === "fulfilled") {
-        setStats(statsResult.value)
-      } else {
-        console.warn("获取设备统计失败:", statsResult.reason)
-        setStats({ total: 50, online: 40, offline: 10 })
-      }
-    } catch (error) {
-      console.error("加载设备数据失败:", error)
-      toast({
-        title: "加载失败",
-        description: "无法加载设备数据，请检查网络连接",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    // 使用模拟数据
+    setDevices(MOCK_DEVICES)
+    setStats(MOCK_STATS)
+    setCurrentPage(page)
+    setTotalPages(5)
+    setIsLoading(false)
   }
 
   // 添加设备
@@ -293,33 +224,34 @@ export default function DevicesPage() {
       return
     }
 
-    try {
-      await apiRequest(`${API_BASE_URL}/v1/devices`, {
-        method: "POST",
-        body: JSON.stringify({
-          name: newDevice.name.trim(),
-          type: newDevice.type,
-          ip: newDevice.ip.trim(),
-          remark: newDevice.remark.trim(),
-        }),
-      })
-
-      toast({
-        title: "添加成功",
-        description: "设备已成功添加",
-      })
-
-      setIsAddDialogOpen(false)
-      setNewDevice({ name: "", type: "android", ip: "", remark: "" })
-      loadDevices(1) // 重新加载第一页
-    } catch (error) {
-      console.error("添加设备失败:", error)
-      toast({
-        title: "添加失败",
-        description: error instanceof Error ? error.message : "添加设备失败，请重试",
-        variant: "destructive",
-      })
+    // 模拟添加成功
+    const newDeviceData: Device = {
+      id: String(devices.length + 1),
+      name: newDevice.name,
+      imei: `sd${Date.now()}`,
+      wechatId: `wxid_${Math.random().toString(36).substr(2, 8)}`,
+      friendCount: 0,
+      todayAdded: 0,
+      status: "online",
+      type: newDevice.type,
+      lastActive: new Date().toISOString(),
+      createTime: new Date().toISOString(),
     }
+
+    setDevices([newDeviceData, ...devices])
+    setStats({
+      ...stats,
+      total: stats.total + 1,
+      online: stats.online + 1,
+    })
+
+    toast({
+      title: "添加成功",
+      description: "设备已成功添加",
+    })
+
+    setIsAddDialogOpen(false)
+    setNewDevice({ name: "", type: "android", ip: "", remark: "" })
   }
 
   // 批量删除设备
@@ -337,52 +269,41 @@ export default function DevicesPage() {
       return
     }
 
-    try {
-      await apiRequest(`${API_BASE_URL}/v1/devices/batch`, {
-        method: "DELETE",
-        body: JSON.stringify({ deviceIds: selectedDevices }),
-      })
+    // 模拟删除
+    const newDevices = devices.filter((d) => !selectedDevices.includes(d.id))
+    setDevices(newDevices)
+    setStats({
+      ...stats,
+      total: stats.total - selectedDevices.length,
+      online:
+        stats.online - selectedDevices.filter((id) => devices.find((d) => d.id === id)?.status === "online").length,
+      offline:
+        stats.offline - selectedDevices.filter((id) => devices.find((d) => d.id === id)?.status === "offline").length,
+    })
 
-      toast({
-        title: "删除成功",
-        description: `已成功删除 ${selectedDevices.length} 个设备`,
-      })
+    toast({
+      title: "删除成功",
+      description: `已成功删除 ${selectedDevices.length} 个设备`,
+    })
 
-      setSelectedDevices([])
-      loadDevices(currentPage) // 重新加载当前页
-    } catch (error) {
-      console.error("批量删除设备失败:", error)
-      toast({
-        title: "删除失败",
-        description: error instanceof Error ? error.message : "批量删除设备失败，请重试",
-        variant: "destructive",
-      })
-    }
+    setSelectedDevices([])
   }
 
   // 搜索处理
   const handleSearch = (value: string) => {
     setSearchTerm(value)
-    setCurrentPage(1) // 重置到第一页
-    // 延迟搜索以避免频繁请求
-    const timeoutId = setTimeout(() => {
-      loadDevices(1)
-    }, 500)
-    return () => clearTimeout(timeoutId)
   }
 
   // 状态筛选处理
   const handleStatusFilter = (value: "all" | "online" | "offline") => {
     setStatusFilter(value)
-    setCurrentPage(1) // 重置到第一页
-    loadDevices(1)
   }
 
   useEffect(() => {
     loadDevices()
   }, [])
 
-  // 过滤设备（客户端过滤作为备选）
+  // 过滤设备
   const filteredDevices = devices.filter((device) => {
     const matchesSearch =
       device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -572,7 +493,7 @@ export default function DevicesPage() {
                   onClick={handleBatchDelete}
                   className="bg-red-500 hover:bg-red-600"
                 >
-                  删除
+                  删除选中 ({selectedDevices.length})
                 </Button>
               )}
             </div>
@@ -581,52 +502,67 @@ export default function DevicesPage() {
 
         {/* 设备列表 */}
         <div className="space-y-3">
-          {isLoading
-            ? [...Array(5)].map((_, i) => (
-                <Card key={i} className="bg-white shadow-sm animate-pulse">
-                  <CardContent className="p-4">
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                  </CardContent>
-                </Card>
-              ))
-            : filteredDevices.map((device) => (
-                <Card key={device.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <Checkbox
-                        checked={selectedDevices.includes(device.id)}
-                        onCheckedChange={(checked) => handleSelectDevice(device.id, !!checked)}
-                        className="rounded"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
+          {isLoading ? (
+            [...Array(5)].map((_, i) => (
+              <Card key={i} className="bg-white shadow-sm animate-pulse">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredDevices.length > 0 ? (
+            filteredDevices.map((device) => (
+              <Card key={device.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      checked={selectedDevices.includes(device.id)}
+                      onCheckedChange={(checked) => handleSelectDevice(device.id, !!checked)}
+                      className="rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Smartphone className="w-4 h-4 text-gray-500" />
                           <h3 className="font-medium text-gray-900">{device.name}</h3>
-                          <Badge
-                            variant={device.status === "online" ? "default" : "secondary"}
-                            className={
-                              device.status === "online"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-gray-100 text-gray-800 border-gray-200"
-                            }
-                          >
-                            {device.status === "online" ? "在线" : "离线"}
+                        </div>
+                        <Badge
+                          variant={device.status === "online" ? "default" : "secondary"}
+                          className={
+                            device.status === "online"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : "bg-gray-100 text-gray-800 border-gray-200"
+                          }
+                        >
+                          {device.status === "online" ? "在线" : "离线"}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span>IMEI: {device.imei}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {device.type === "android" ? "Android" : "iOS"}
                           </Badge>
                         </div>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <div>IMEI: {device.imei}</div>
-                          <div>微信号: {device.wechatId}</div>
-                          <div className="flex items-center justify-between">
-                            <span>好友数: {device.friendCount}</span>
-                            <span className="text-green-600">今日新增: +{device.todayAdded}</span>
-                          </div>
+                        <div>微信号: {device.wechatId}</div>
+                        <div className="flex items-center justify-between pt-1">
+                          <span>好友数: {device.friendCount}</span>
+                          <span className="text-green-600 font-medium">今日新增: +{device.todayAdded}</span>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-          {!isLoading && filteredDevices.length === 0 && (
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
             <Card className="bg-white shadow-sm">
               <CardContent className="p-8 text-center">
                 <div className="text-gray-500 mb-4">没有找到匹配的设备</div>

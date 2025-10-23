@@ -17,7 +17,7 @@ interface BasicSettingsProps {
   onUpdate: (data: any) => void
 }
 
-export function BasicSettings({ data, onUpdate }: BasicSettingsProps) {
+export default function BasicSettings({ data, onUpdate }: BasicSettingsProps) {
   const [formData, setFormData] = useState(data)
 
   const handleChange = (field: string, value: any) => {

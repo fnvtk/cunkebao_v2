@@ -201,9 +201,7 @@ export default function ScenariosPage() {
               >
                 {/* 状态指示器 */}
                 <div className="absolute top-4 left-4">
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${scenario.status === "active" ? "bg-green-500" : "bg-gray-400"}`}
-                  />
+                  
                 </div>
 
                 <div className="flex flex-col items-center text-center">

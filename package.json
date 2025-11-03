@@ -64,6 +64,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "tw-animate-css": "latest",
     "url": "latest",
     "vaul": "latest"
   },
@@ -76,7 +77,7 @@
     "eslint-config-next": "14.0.0",
     "postcss": "^8.5",
     "prettier": "^3.0.3",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.1.9",
     "tsx": "^4.6.0",
     "typescript": "^5"
   }

@@ -40,6 +40,8 @@ export function useIsMobile(breakpoint = 768): boolean {
   return isMobile
 }
 
+export const useMobile = useIsMobile
+
 /**
  * 获取设备类型的Hook
  * @returns 设备类型信息

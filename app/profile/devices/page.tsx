@@ -1,100 +1,218 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, RefreshCw, Plus, MoreVertical, Battery, Users, MapPin, User, Grid3X3, List } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getDevices, getDeviceStats, type Device, type DeviceStats } from "@/lib/api/devices"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { ChevronLeft, Plus, Search, Filter, RefreshCw, Grid3x3, List } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
-export default function DevicesPage() {
-  const { toast } = useToast()
+// 设备类型定义
+interface Device {
+  id: string
+  name: string
+  imei: string
+  wechatId: string
+  friendCount: number
+  todayAdded: number
+  status: "online" | "offline"
+  type: "android" | "ios"
+  lastActive: string
+  createTime: string
+}
+
+// 统计数据类型
+interface DeviceStats {
+  total: number
+  online: number
+  offline: number
+}
+
+// 模拟设备数据
+const MOCK_DEVICES: Device[] = [
+  {
+    id: "1",
+    name: "设备 1",
+    imei: "sd123123",
+    wechatId: "wxid_qc924n67",
+    friendCount: 649,
+    todayAdded: 43,
+    status: "online",
+    type: "android",
+    lastActive: "2025-01-29 14:30:00",
+    createTime: "2025-01-01 10:00:00",
+  },
+  {
+    id: "2",
+    name: "设备 2",
+    imei: "sd123124",
+    wechatId: "wxid_kwjazkzd",
+    friendCount: 124,
+    todayAdded: 34,
+    status: "online",
+    type: "android",
+    lastActive: "2025-01-29 14:25:00",
+    createTime: "2025-01-02 11:00:00",
+  },
+  {
+    id: "3",
+    name: "设备 3",
+    imei: "sd123125",
+    wechatId: "wxid_6t25lkdf",
+    friendCount: 295,
+    todayAdded: 5,
+    status: "online",
+    type: "ios",
+    lastActive: "2025-01-29 14:20:00",
+    createTime: "2025-01-03 09:30:00",
+  },
+  {
+    id: "4",
+    name: "设备 4",
+    imei: "sd123126",
+    wechatId: "wxid_tvbojpy2",
+    friendCount: 864,
+    todayAdded: 36,
+    status: "online",
+    type: "android",
+    lastActive: "2025-01-29 14:15:00",
+    createTime: "2025-01-04 08:00:00",
+  },
+  {
+    id: "5",
+    name: "设备 5",
+    imei: "sd123127",
+    wechatId: "wxid_8qi6bqqi",
+    friendCount: 426,
+    todayAdded: 12,
+    status: "online",
+    type: "android",
+    lastActive: "2025-01-29 14:10:00",
+    createTime: "2025-01-05 10:30:00",
+  },
+  {
+    id: "6",
+    name: "设备 6",
+    imei: "sd123128",
+    wechatId: "wxid_icuybkc0",
+    friendCount: 882,
+    todayAdded: 15,
+    status: "offline",
+    type: "ios",
+    lastActive: "2025-01-29 12:00:00",
+    createTime: "2025-01-06 14:00:00",
+  },
+]
+
+export default function DeviceManagementPage() {
   const router = useRouter()
+  const { toast } = useToast()
 
-  // 状态管理 - 确保初始值类型正确
-  const [devices, setDevices] = useState<Device[]>([]) // 确保初始值是数组
-  const [stats, setStats] = useState<DeviceStats>({ total: 0, online: 0, offline: 0, error: 0 })
-  const [isLoading, setIsLoading] = useState(true)
+  const [devices, setDevices] = useState<Device[]>(MOCK_DEVICES)
+  const [stats, setStats] = useState<DeviceStats>({
+    total: 50,
+    online: 40,
+    offline: 10,
+  })
   const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "online" | "offline">("all")
   const [selectedDevices, setSelectedDevices] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(5)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [newDevice, setNewDevice] = useState({
+    name: "",
+    type: "android" as "android" | "ios",
+    ip: "",
+    remark: "",
+  })
 
   // 加载设备数据
   const loadDevices = async () => {
-    try {
-      setIsLoading(true)
+    setIsLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    setDevices(MOCK_DEVICES)
+    setIsLoading(false)
+  }
 
-      // 并行请求设备列表和统计数据
-      const [devicesData, statsData] = await Promise.all([getDevices(), getDeviceStats()])
-
-      // 数据安全检查 - 确保devices是数组
-      if (Array.isArray(devicesData)) {
-        setDevices(devicesData)
-      } else {
-        console.error("设备数据不是数组格式:", devicesData)
-        setDevices([]) // 设置为空数组
-        toast({
-          title: "数据格式错误",
-          description: "设备数据格式不正确，已重置为空列表",
-          variant: "destructive",
-        })
-      }
-
-      // 统计数据安全检查
-      if (statsData && typeof statsData === "object") {
-        setStats(statsData)
-      } else {
-        console.error("统计数据格式错误:", statsData)
-        setStats({ total: 0, online: 0, offline: 0, error: 0 })
-      }
-    } catch (error) {
-      console.error("加载设备数据失败:", error)
-
-      // 错误处理 - 设置安全的默认值
-      setDevices([])
-      setStats({ total: 0, online: 0, offline: 0, error: 0 })
-
+  // 添加设备
+  const handleAddDevice = async () => {
+    if (!newDevice.name.trim()) {
       toast({
-        title: "加载失败",
-        description: "无法加载设备数据，请检查网络连接或稍后重试",
+        title: "参数错误",
+        description: "请填写设备名称",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
+      return
+    }
+
+    if (!newDevice.ip.trim()) {
+      toast({
+        title: "参数错误",
+        description: "请填写设备IP地址",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const newDeviceData: Device = {
+      id: String(devices.length + 1),
+      name: newDevice.name,
+      imei: `sd${Date.now()}`,
+      wechatId: `wxid_${Math.random().toString(36).substr(2, 8)}`,
+      friendCount: 0,
+      todayAdded: 0,
+      status: "online",
+      type: newDevice.type,
+      lastActive: new Date().toISOString(),
+      createTime: new Date().toISOString(),
+    }
+
+    setDevices([newDeviceData, ...devices])
+    setStats({
+      ...stats,
+      total: stats.total + 1,
+      online: stats.online + 1,
+    })
+
+    toast({
+      title: "添加成功",
+      description: "设备已成功添加",
+    })
+
+    setIsAddDialogOpen(false)
+    setNewDevice({ name: "", type: "android", ip: "", remark: "" })
+  }
+
+  // 过滤设备
+  const filteredDevices = devices.filter((device) => {
+    const matchesSearch =
+      device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.imei.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.wechatId.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === "all" || device.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+
+  // 全选/取消全选
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDevices(filteredDevices.map((d) => d.id))
+    } else {
+      setSelectedDevices([])
     }
   }
 
-  useEffect(() => {
-    loadDevices()
-
-    // 定时刷新设备状态 - 每30秒刷新一次
-    const interval = setInterval(loadDevices, 30000)
-
-    // 清理定时器
-    return () => clearInterval(interval)
-  }, [])
-
-  // 过滤设备 - 添加安全检查
-  const filteredDevices = Array.isArray(devices)
-    ? devices.filter((device) => {
-        if (!device) return false
-
-        const searchLower = searchTerm.toLowerCase()
-        return (
-          (device.name && device.name.toLowerCase().includes(searchLower)) ||
-          (device.imei && device.imei.toLowerCase().includes(searchLower)) ||
-          (device.wechatId && device.wechatId.toLowerCase().includes(searchLower))
-        )
-      })
-    : []
-
-  // 处理设备选择
-  const handleDeviceSelect = (deviceId: string, checked: boolean) => {
+  // 单个设备选择
+  const handleSelectDevice = (deviceId: string, checked: boolean) => {
     if (checked) {
       setSelectedDevices((prev) => [...prev, deviceId])
     } else {
@@ -102,268 +220,274 @@ export default function DevicesPage() {
     }
   }
 
-  // 全选/取消全选
-  const handleSelectAll = () => {
-    if (selectedDevices.length === filteredDevices.length) {
-      setSelectedDevices([])
-    } else {
-      setSelectedDevices(filteredDevices.map((device) => device.id))
-    }
-  }
+  const isAllSelected = filteredDevices.length > 0 && selectedDevices.length === filteredDevices.length
 
-  // 获取状态指示器颜色
-  const getStatusIndicatorColor = (status: string) => {
-    switch (status) {
-      case "online":
-        return "bg-green-500"
-      case "offline":
-        return "bg-gray-400"
-      case "error":
-        return "bg-red-500"
-      default:
-        return "bg-gray-400"
-    }
-  }
-
-  // 获取设备型号图标
-  const getDeviceModelIcon = (model: string) => {
-    if (!model) return "📱"
-
-    if (model.includes("iPhone")) {
-      return "📱"
-    } else if (model.includes("S23")) {
-      return "📱"
-    } else if (model.includes("Mi")) {
-      return "📱"
-    }
-    return "📱"
-  }
-
-  // 加载状态
-  if (isLoading) {
-    return (
-      <div className="flex-1 pb-16 bg-gray-50">
-        <header className="sticky top-0 z-10 bg-white border-b">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-lg font-medium">设备管理</h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" disabled>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              </Button>
-              <Button size="sm" className="bg-blue-500 hover:bg-blue-600" disabled>
-                <Plus className="h-4 w-4 mr-1" />
-                添加
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        <div className="p-4 space-y-4">
-          {/* 加载骨架屏 */}
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-4 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded"></div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    loadDevices()
+  }, [])
 
   return (
-    <div className="flex-1 pb-16 bg-gray-50">
-      {/* 顶部导航 */}
-      <header className="sticky top-0 z-10 bg-white border-b">
+    <div className="flex flex-col min-h-screen bg-gray-50 pb-16">
+      {/* 顶部导航栏 */}
+      <header className="sticky top-0 z-10 bg-white border-b shadow-sm">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="w-6 h-6" />
             </Button>
-            <h1 className="text-lg font-medium">设备管理</h1>
+            <h1 className="text-xl font-bold">设备管理</h1>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={loadDevices}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
-              <Plus className="h-4 w-4 mr-1" />
-              添加
-            </Button>
-          </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 py-2">
+                <Plus className="w-5 h-5 mr-1" />
+                添加设备
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>添加新设备</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="device-name">设备名称 *</Label>
+                  <Input
+                    id="device-name"
+                    placeholder="请输入设备名称"
+                    value={newDevice.name}
+                    onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="device-type">设备类型</Label>
+                  <Select
+                    value={newDevice.type}
+                    onValueChange={(value: "android" | "ios") => setNewDevice({ ...newDevice, type: value })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="android">Android</SelectItem>
+                      <SelectItem value="ios">iOS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="device-ip">IP地址 *</Label>
+                  <Input
+                    id="device-ip"
+                    placeholder="请输入设备IP地址"
+                    value={newDevice.ip}
+                    onChange={(e) => setNewDevice({ ...newDevice, ip: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="device-remark">备注</Label>
+                  <Input
+                    id="device-remark"
+                    placeholder="请输入备注信息（可选）"
+                    value={newDevice.remark}
+                    onChange={(e) => setNewDevice({ ...newDevice, remark: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    取消
+                  </Button>
+                  <Button onClick={handleAddDevice} className="bg-blue-500 hover:bg-blue-600">
+                    添加
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
-      <div className="p-4 space-y-4">
-        {/* 统计区域 */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
-            <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">总数</div>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </div>
+      <div className="flex-1 p-4 space-y-4">
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="bg-white shadow-sm border-0">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-blue-500 mb-1">{stats.total}</div>
+              <div className="text-sm text-gray-600">总设备数</div>
+            </CardContent>
           </Card>
-          <Card className="p-4">
-            <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">在线</div>
-              <div className="text-2xl font-bold text-green-600">{stats.online}</div>
-            </div>
+          <Card className="bg-white shadow-sm border-0">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-green-500 mb-1">{stats.online}</div>
+              <div className="text-sm text-gray-600">在线设备</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-white shadow-sm border-0">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-red-500 mb-1">{stats.offline}</div>
+              <div className="text-sm text-gray-600">离线设备</div>
+            </CardContent>
           </Card>
         </div>
 
-        {/* 搜索框 */}
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="搜索设备名称、IMEI或微信号..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        {/* 筛选区域 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        {/* 搜索和操作栏 */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="p-4">
             <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="搜索设备IMEI/微信"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-gray-200"
+                />
+              </div>
+              <Button variant="outline" size="icon" className="border-gray-200 bg-transparent">
+                <Filter className="w-5 h-5" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={loadDevices} className="border-gray-200 bg-transparent">
+                <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 筛选和视图切换 */}
+        <Card className="bg-white shadow-sm border-0">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                  <SelectTrigger className="w-32 border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部状态</SelectItem>
+                    <SelectItem value="online">在线</SelectItem>
+                    <SelectItem value="offline">离线</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
+                  <span className="text-sm text-gray-600">全选</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">
+                  已选择 {selectedDevices.length}/{filteredDevices.length}
+                </span>
+                {selectedDevices.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedDevices([])}
+                    className="text-blue-500 border-blue-200"
+                  >
+                    取消全选
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* 视图切换按钮 */}
+            <div className="flex items-center space-x-2 mt-3">
               <Button
                 variant={viewMode === "list" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("list")}
+                className={viewMode === "list" ? "bg-blue-500 hover:bg-blue-600" : ""}
               >
-                <List className="h-4 w-4 mr-1" />
+                <List className="w-4 h-4 mr-1" />
                 列表
               </Button>
               <Button
                 variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
+                className={viewMode === "grid" ? "bg-blue-500 hover:bg-blue-600" : ""}
               >
-                <Grid3X3 className="h-4 w-4 mr-1" />
+                <Grid3x3 className="w-4 h-4 mr-1" />
                 网格
               </Button>
             </div>
-            <div className="text-sm text-gray-500">
-              已选择 {selectedDevices.length}/{filteredDevices.length}
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleSelectAll}>
-            {selectedDevices.length === filteredDevices.length ? "取消全选" : "全选"}
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* 设备列表 */}
-        {filteredDevices.length === 0 ? (
-          <Card className="p-8 text-center">
-            <div className="text-gray-500">{searchTerm ? "没有找到匹配的设备" : "暂无设备数据"}</div>
-            {!searchTerm && (
-              <Button className="mt-4 bg-transparent" onClick={loadDevices} variant="outline">
-                重新加载
-              </Button>
-            )}
-          </Card>
-        ) : (
+        {isLoading ? (
           <div className="space-y-3">
-            {filteredDevices.map((device) => (
-              <Card key={device.id} className="p-4">
-                <div className="flex items-center space-x-3">
-                  {/* 复选框和状态指示器 */}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={selectedDevices.includes(device.id)}
-                      onCheckedChange={(checked) => handleDeviceSelect(device.id, !!checked)}
-                    />
-                    <div className={`w-2 h-2 rounded-full ${getStatusIndicatorColor(device.status)}`}></div>
-                  </div>
-
-                  {/* 设备信息 */}
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-medium">{device.name || "未命名设备"}</h3>
-                        <span className="text-lg">{getDeviceModelIcon(device.model)}</span>
-                        <span className="text-sm text-gray-500">{device.model || "未知型号"}</span>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>编辑设备</DropdownMenuItem>
-                          <DropdownMenuItem>重启设备</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">删除设备</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div>IMEI: {device.imei || "未知"}</div>
-                      <div>微信号: {device.wechatId || "未绑定"}</div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3 text-sm">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <Battery className="h-4 w-4" />
-                          <span>{device.battery || 0}%</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4" />
-                          <span>{device.friendCount || 0}</span>
-                        </div>
-                        <div className="text-green-600">+{device.todayAdded || 0}</div>
-                      </div>
-                      <div className="text-xs text-gray-500">{device.lastActiveTime || "未知"}</div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{device.location || "未知位置"}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <User className="h-3 w-3" />
-                        <span>{device.employee || "未分配"}</span>
-                      </div>
+            {[...Array(5)].map((_, i) => (
+              <Card key={i} className="bg-white shadow-sm animate-pulse border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 bg-gray-200 rounded"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                     </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>
-        )}
+        ) : filteredDevices.length > 0 ? (
+          <div className={viewMode === "grid" ? "grid grid-cols-2 gap-3" : "space-y-3"}>
+            {filteredDevices.map((device) => (
+              <Card
+                key={device.id}
+                className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer border-0"
+                onClick={() => router.push(`/devices/${device.id}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      checked={selectedDevices.includes(device.id)}
+                      onCheckedChange={(checked) => handleSelectDevice(device.id, !!checked)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{device.name}</h3>
+                        <Badge
+                          className={
+                            device.status === "online"
+                              ? "bg-green-100 text-green-700 border-0"
+                              : "bg-gray-100 text-gray-600 border-0"
+                          }
+                        >
+                          {device.status === "online" ? "在线" : "离线"}
+                        </Badge>
+                      </div>
 
-        {/* 分页 */}
-        {filteredDevices.length > 0 && (
-          <div className="flex items-center justify-between py-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-            >
-              上一页
-            </Button>
-            <span className="text-sm text-gray-500">
-              {currentPage}/{totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
-              下一页
-            </Button>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div>IMEI: {device.imei}</div>
+                        <div>微信号: {device.wechatId}</div>
+                        <div className="flex items-center justify-between pt-1">
+                          <span>好友数: {device.friendCount}</span>
+                          <span className="text-green-600 font-medium">今日新增: +{device.todayAdded}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        ) : (
+          <Card className="bg-white shadow-sm border-0">
+            <CardContent className="p-12 text-center">
+              <div className="text-gray-400 mb-4">暂无设备数据</div>
+              <Button variant="outline" onClick={loadDevices} className="border-gray-300 bg-transparent">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                重新加载
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

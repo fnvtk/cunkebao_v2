@@ -251,5 +251,9 @@ export class AuthAPI {
   }
 }
 
+// 添加authApi实例导出,供其他模块使用
+export const authApi = AuthAPI
+
 // 默认导出
 export default AuthAPI
+</merged_code

@@ -6,66 +6,114 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, RefreshCw, Zap, TrendingUp, Calendar, Filter, ShoppingCart } from "lucide-react"
+import { ArrowLeft, RefreshCw, Zap, TrendingUp, Calendar, Filter, ShoppingCart, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-// 消费记录数据类型
 interface ConsumptionRecord {
   id: string
   date: string
   type: string
   description: string
-  amount: number
   computePower: number
   status: "completed" | "pending" | "failed"
 }
 
-// 模拟消费记录数据
 const mockConsumptionRecords: ConsumptionRecord[] = [
   {
     id: "1",
     date: "2025/2/9 14:30:00",
-    type: "AI分析",
-    description: "客户意向分析处理",
-    amount: 28.5,
+    type: "AI助手对话",
+    description: "使用AI助手进行客户意向分析",
     computePower: 150,
     status: "completed",
   },
   {
     id: "2",
-    date: "2025/2/9 11:20:00",
-    type: "内容生成",
-    description: "智能文案生成",
-    amount: 15.2,
-    computePower: 80,
+    date: "2025/2/9 13:45:00",
+    type: "智能获客",
+    description: "附近的人场景获客任务执行",
+    computePower: 185,
     status: "completed",
   },
   {
     id: "3",
-    date: "2025/2/8 16:45:00",
-    type: "数据训练",
-    description: "模型训练任务",
-    amount: 45.8,
-    computePower: 240,
+    date: "2025/2/9 11:20:00",
+    type: "内容生成",
+    description: "AI生成朋友圈营销文案",
+    computePower: 80,
     status: "completed",
   },
   {
     id: "4",
-    date: "2025/2/8 09:15:00",
-    type: "智能推荐",
-    description: "个性化推荐算法",
-    amount: 12.3,
-    computePower: 65,
+    date: "2025/2/9 10:15:00",
+    type: "数据分析",
+    description: "客户行为数据智能分析",
+    computePower: 225,
     status: "completed",
   },
   {
     id: "5",
+    date: "2025/2/8 16:45:00",
+    type: "自动化任务",
+    description: "群发消息自动化执行",
+    computePower: 99,
+    status: "completed",
+  },
+  {
+    id: "6",
+    date: "2025/2/8 15:30:00",
+    type: "内容优化",
+    description: "营销内容AI优化建议",
+    computePower: 66,
+    status: "completed",
+  },
+  {
+    id: "7",
+    date: "2025/2/8 14:20:00",
+    type: "智能推荐",
+    description: "客户标签智能推荐",
+    computePower: 44,
+    status: "completed",
+  },
+  {
+    id: "8",
+    date: "2025/2/8 09:15:00",
+    type: "AI分析",
+    description: "目标客户画像分析",
+    computePower: 170,
+    status: "completed",
+  },
+  {
+    id: "9",
     date: "2025/2/7 20:30:00",
     type: "语音识别",
-    description: "语音转文字处理",
-    amount: 8.7,
+    description: "客户语音消息转文字",
     computePower: 45,
     status: "pending",
+  },
+  {
+    id: "10",
+    date: "2025/2/7 18:45:00",
+    type: "图片生成",
+    description: "AI生成营销海报",
+    computePower: 135,
+    status: "completed",
+  },
+  {
+    id: "11",
+    date: "2025/2/7 16:20:00",
+    type: "智能筛选",
+    description: "潜在客户智能筛选",
+    computePower: 104,
+    status: "completed",
+  },
+  {
+    id: "12",
+    date: "2025/2/7 14:10:00",
+    type: "自动回复",
+    description: "客户消息AI自动回复",
+    computePower: 34,
+    status: "completed",
   },
 ]
 
@@ -79,13 +127,73 @@ const mockOverviewData = {
   growthRate: 15.3,
 }
 
+interface PurchaseRecord {
+  id: string
+  date: string
+  packageName: string
+  computePower: number
+  amount: number
+  paymentMethod: string
+  status: "completed" | "pending" | "failed"
+}
+
+const mockPurchaseRecords: PurchaseRecord[] = [
+  {
+    id: "1",
+    date: "2025/2/9 10:30:00",
+    packageName: "标准算力包",
+    computePower: 1000,
+    amount: 99,
+    paymentMethod: "微信支付",
+    status: "completed",
+  },
+  {
+    id: "2",
+    date: "2025/2/5 15:20:00",
+    packageName: "高级算力包",
+    computePower: 3000,
+    amount: 268,
+    paymentMethod: "支付宝",
+    status: "completed",
+  },
+  {
+    id: "3",
+    date: "2025/2/1 09:15:00",
+    packageName: "基础算力包",
+    computePower: 500,
+    amount: 50,
+    paymentMethod: "微信支付",
+    status: "completed",
+  },
+  {
+    id: "4",
+    date: "2025/1/28 14:45:00",
+    packageName: "企业算力包",
+    computePower: 10000,
+    amount: 799,
+    paymentMethod: "企业转账",
+    status: "completed",
+  },
+  {
+    id: "5",
+    date: "2025/1/25 11:30:00",
+    packageName: "标准算力包",
+    computePower: 1000,
+    amount: 99,
+    paymentMethod: "微信支付",
+    status: "completed",
+  },
+]
+
 export default function BillingPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [consumptionRecords, setConsumptionRecords] = useState<ConsumptionRecord[]>([])
+  const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [filterType, setFilterType] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
+  const [purchaseFilterStatus, setPurchaseFilterStatus] = useState("all")
 
   // 加载数据
   const loadData = async () => {
@@ -93,9 +201,11 @@ export default function BillingPage() {
       setLoading(true)
       await new Promise((resolve) => setTimeout(resolve, 800))
       setConsumptionRecords(mockConsumptionRecords)
+      setPurchaseRecords(mockPurchaseRecords)
     } catch (error) {
       console.error("加载数据失败:", error)
       setConsumptionRecords(mockConsumptionRecords)
+      setPurchaseRecords(mockPurchaseRecords)
     } finally {
       setLoading(false)
     }
@@ -120,6 +230,10 @@ export default function BillingPage() {
     router.push("/profile/billing/purchase")
   }
 
+  const handleConsumptionRecords = () => {
+    router.push("/profile/billing/consumption")
+  }
+
   // 获取状态文本和颜色
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -134,11 +248,15 @@ export default function BillingPage() {
     }
   }
 
-  // 过滤消费记录
   const filteredRecords = consumptionRecords.filter((record) => {
     const typeMatch = filterType === "all" || record.type === filterType
     const statusMatch = filterStatus === "all" || record.status === filterStatus
     return typeMatch && statusMatch
+  })
+
+  const filteredPurchaseRecords = purchaseRecords.filter((record) => {
+    const statusMatch = purchaseFilterStatus === "all" || record.status === purchaseFilterStatus
+    return statusMatch
   })
 
   if (loading) {
@@ -174,7 +292,7 @@ export default function BillingPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">概览</TabsTrigger>
-            <TabsTrigger value="records">消费记录</TabsTrigger>
+            <TabsTrigger value="records">使用记录</TabsTrigger>
           </TabsList>
 
           {/* 概览标签页 */}
@@ -249,69 +367,95 @@ export default function BillingPage() {
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     购买算力包
                   </Button>
-                  <Button variant="outline" className="h-12 bg-transparent">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    使用记录
+                  <Button onClick={handleConsumptionRecords} variant="outline" className="h-12 bg-transparent">
+                    <Package className="h-4 w-4 mr-2" />
+                    消费记录
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* 消费记录标签页 */}
+          {/* 使用记录标签页保持不变 */}
           <TabsContent value="records" className="space-y-4">
-            {/* 筛选器 */}
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <Filter className="h-4 w-4 text-gray-500" />
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部类型</SelectItem>
-                      <SelectItem value="AI分析">AI分析</SelectItem>
-                      <SelectItem value="内容生成">内容生成</SelectItem>
-                      <SelectItem value="数据训练">数据训练</SelectItem>
-                      <SelectItem value="智能推荐">智能推荐</SelectItem>
-                      <SelectItem value="语音识别">语音识别</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部状态</SelectItem>
-                      <SelectItem value="completed">已完成</SelectItem>
-                      <SelectItem value="pending">处理中</SelectItem>
-                      <SelectItem value="failed">失败</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">筛选条件</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={filterType} onValueChange={setFilterType}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="操作类型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部类型</SelectItem>
+                        <SelectItem value="AI助手对话">AI助手对话</SelectItem>
+                        <SelectItem value="智能获客">智能获客</SelectItem>
+                        <SelectItem value="内容生成">内容生成</SelectItem>
+                        <SelectItem value="数据分析">数据分析</SelectItem>
+                        <SelectItem value="自动化任务">自动化任务</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="状态" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部状态</SelectItem>
+                        <SelectItem value="completed">已完成</SelectItem>
+                        <SelectItem value="pending">处理中</SelectItem>
+                        <SelectItem value="failed">失败</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 消费记录列表 */}
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-blue-600">{filteredRecords.length}</p>
+                    <p className="text-xs text-gray-600">记录总数</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {filteredRecords.reduce((sum, record) => sum + record.computePower, 0)}
+                    </p>
+                    <p className="text-xs text-gray-600">总消耗算力</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="space-y-3">
               {filteredRecords.map((record) => {
                 const statusInfo = getStatusInfo(record.status)
                 return (
-                  <Card key={record.id} className="bg-white">
+                  <Card key={record.id} className="bg-white hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center space-x-2">
-                          <h3 className="font-medium text-gray-900">{record.type}</h3>
+                          <Badge variant="outline" className="text-xs px-2 py-1">
+                            {record.type}
+                          </Badge>
                           <Badge className={`${statusInfo.color} text-xs px-2 py-1`}>{statusInfo.text}</Badge>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-red-600">-¥{record.amount}</p>
-                          <p className="text-xs text-gray-500">{record.computePower} 算力</p>
-                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{record.description}</p>
-                      <p className="text-xs text-gray-400">{record.date}</p>
+
+                      <h3 className="font-medium text-gray-900 mb-2">{record.description}</h3>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <Zap className="h-4 w-4 text-yellow-500" />
+                          <span className="text-sm font-semibold text-purple-600">消耗 {record.computePower} 算力</span>
+                        </div>
+                        <p className="text-xs text-gray-400">{record.date}</p>
+                      </div>
                     </CardContent>
                   </Card>
                 )
@@ -319,8 +463,12 @@ export default function BillingPage() {
             </div>
 
             {filteredRecords.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">暂无符合条件的记录</p>
+              <div className="text-center py-12">
+                <div className="text-gray-400 mb-2">
+                  <Calendar className="h-12 w-12 mx-auto" />
+                </div>
+                <p className="text-gray-500 font-medium">暂无符合条件的使用记录</p>
+                <p className="text-sm text-gray-400 mt-1">尝试调整筛选条件查看更多记录</p>
               </div>
             )}
           </TabsContent>

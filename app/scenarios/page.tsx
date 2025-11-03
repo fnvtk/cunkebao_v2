@@ -174,7 +174,6 @@ export default function ScenariosPage() {
             </Button>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-gray-900">场景获客</h1>
-              <p className="text-sm text-gray-500 mt-0.5">选择获客场景，开始您的营销之旅</p>
             </div>
           </div>
           <Button
@@ -190,26 +189,9 @@ export default function ScenariosPage() {
       {/* 主要内容 */}
       <div className="px-4 pb-24">
         {/* 数据概览 */}
-        <div className="bg-white rounded-2xl p-6 mt-4 shadow-sm">
-          <div className="grid grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">{totalAcquisitions}</div>
-              <div className="text-sm text-gray-600">今日总获客</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">{activeScenarios}</div>
-              <div className="text-sm text-gray-600">活跃场景</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-2">{averageGrowthRate}%</div>
-              <div className="text-sm text-gray-600">平均增长</div>
-            </div>
-          </div>
-        </div>
 
         {/* 常规获客场景 */}
         <div className="mt-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 px-1">常规获客场景</h2>
           <div className="grid grid-cols-2 gap-4">
             {scenarios.map((scenario) => (
               <Card
@@ -224,15 +206,12 @@ export default function ScenariosPage() {
                   />
                 </div>
 
-                <div className="flex flex-col items-center text-center pt-3">
+                <div className="flex flex-col items-center text-center">
                   {/* 场景图标 */}
                   <div className="text-5xl mb-3">{scenario.icon}</div>
 
                   {/* 场景名称 */}
-                  <h3 className="text-base font-bold text-gray-900 mb-2">{scenario.name}</h3>
-
-                  {/* 场景描述 */}
-                  <p className="text-xs text-gray-500 line-clamp-2 min-h-[2.5rem] mb-3">{scenario.description}</p>
+                  <h3 className="text-base font-bold text-gray-900 mb-3">{scenario.name}</h3>
 
                   {/* 数据展示 */}
                   <div className="w-full space-y-2">

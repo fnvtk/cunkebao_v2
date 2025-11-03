@@ -17,7 +17,7 @@ interface BasicSettingsProps {
   onUpdate: (data: any) => void
 }
 
-export default function BasicSettings({ data, onUpdate }: BasicSettingsProps) {
+function BasicSettings({ data, onUpdate }: BasicSettingsProps) {
   const [formData, setFormData] = useState(data)
 
   const handleChange = (field: string, value: any) => {
@@ -105,3 +105,6 @@ export default function BasicSettings({ data, onUpdate }: BasicSettingsProps) {
     </div>
   )
 }
+
+export { BasicSettings }
+export default BasicSettings

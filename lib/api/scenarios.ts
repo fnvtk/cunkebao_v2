@@ -77,6 +77,31 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   }
 }
 
+// 统一的API响应格式类型
+export interface ApiResponse<T = any> {
+  code: number
+  message?: string
+  data?: T
+}
+
+// 场景基础类型（用于列表查询）
+export interface ScenarioBase {
+  id: string
+  name: string
+  type: Scenario["type"]
+  status: string
+  createdAt: string
+  updatedAt: string
+}
+
+// 分页查询响应类型
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
 // 场景API服务
 export const scenarioApi = {
   // 获取场景列表
@@ -288,6 +313,123 @@ export const scenarioApi = {
         totalAcquisition: mockScenarioData.reduce((sum, s) => sum + s.totalAcquired, 0),
         averagePassRate: mockScenarioData.reduce((sum, s) => sum + s.passRate, 0) / mockScenarioData.length,
         topPerformingScenario: mockScenarioData.sort((a, b) => b.todayCount - a.todayCount)[0]?.name || "暂无数据",
+      }
+    }
+  },
+
+  async query(params?: {
+    page?: number
+    pageSize?: number
+    type?: string
+    status?: string
+    search?: string
+  }): Promise<ApiResponse<PaginatedResponse<ScenarioBase>>> {
+    try {
+      const result = await this.getScenarios(params)
+      return {
+        code: 0,
+        data: {
+          items: result.data as unknown as ScenarioBase[],
+          total: result.total,
+          page: params?.page || 1,
+          pageSize: params?.pageSize || 20,
+        },
+      }
+    } catch (error) {
+      console.error("查询场景列表失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "查询失败",
+        data: {
+          items: mockScenarioData as unknown as ScenarioBase[],
+          total: mockScenarioData.length,
+          page: params?.page || 1,
+          pageSize: params?.pageSize || 20,
+        },
+      }
+    }
+  },
+
+  async copy(id: string, name: string): Promise<ApiResponse<Scenario>> {
+    try {
+      const result = await this.copyScenario(id, name)
+      return {
+        code: 0,
+        data: result,
+      }
+    } catch (error) {
+      console.error("复制场景失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "复制失败",
+      }
+    }
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    try {
+      await this.deleteScenario(id)
+      return {
+        code: 0,
+      }
+    } catch (error) {
+      console.error("删除场景失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "删除失败",
+      }
+    }
+  },
+
+  async start(id: string): Promise<ApiResponse<void>> {
+    try {
+      await this.startScenario(id)
+      return {
+        code: 0,
+      }
+    } catch (error) {
+      console.error("启动场景失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "启动失败",
+      }
+    }
+  },
+
+  async pause(id: string): Promise<ApiResponse<void>> {
+    try {
+      await this.pauseScenario(id)
+      return {
+        code: 0,
+      }
+    } catch (error) {
+      console.error("暂停场景失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "暂停失败",
+      }
+    }
+  },
+
+  async getApiConfig(id: string): Promise<
+    ApiResponse<{
+      apiKey: string
+      webhookUrl: string
+      callbackUrl: string
+      config: Record<string, any>
+    }>
+  > {
+    try {
+      const result = await this.getScenarioApiConfig(id)
+      return {
+        code: 0,
+        data: result,
+      }
+    } catch (error) {
+      console.error("获取API配置失败:", error)
+      return {
+        code: -1,
+        message: error instanceof Error ? error.message : "获取配置失败",
       }
     }
   },

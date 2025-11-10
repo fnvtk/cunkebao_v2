@@ -7,6 +7,23 @@ export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
 
+  const hiddenPaths = [
+    "/profile/devices",
+    "/profile/wechat",
+    "/profile/stores",
+    "/profile/traffic-pool",
+    "/profile/content",
+  ]
+
+  // 检查当前路径是否需要隐藏导航栏
+  const shouldHideNav = hiddenPaths.some((path) => pathname.startsWith(path))
+
+  // 如果需要隐藏,返回 null
+  if (shouldHideNav) {
+    return null
+  }
+  // </CHANGE>
+
   const navItems = [
     {
       name: "首页",

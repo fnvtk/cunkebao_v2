@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronLeft, ChevronRight, Settings, Smartphone, MessageCircle, Layers, FolderOpen } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings, Smartphone, MessageCircle, Layers, FolderOpen, Store } from "lucide-react"
 
 interface UserInfo {
   name: string
@@ -54,6 +54,15 @@ export default function ProfilePage() {
       count: 17,
       color: "text-green-500",
       path: "/wechat-accounts",
+    },
+    {
+      id: "stores",
+      name: "门店账号管理",
+      description: "管理门店账号和权限",
+      icon: Store,
+      count: 5,
+      color: "text-cyan-500",
+      path: "/profile/stores",
     },
     {
       id: "traffic",

@@ -23,10 +23,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   DropdownMenu,
@@ -35,6 +31,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/components/ui/use-toast"
 import type { TrafficPoolGroup } from "@/types/traffic"
 
 // 图标渲染组件
@@ -96,11 +93,9 @@ export default function TrafficPoolGroupsPage() {
   // 状态管理
   const [groups, setGroups] = useState<TrafficPoolGroup[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleteGroupId, setDeleteGroupId] = useState<string>("")
-  const [newGroupName, setNewGroupName] = useState("")
-  const [newGroupDescription, setNewGroupDescription] = useState("")
+  const [showCreateDialog, setShowCreateDialog] = useState(false) // Declare the variable here
 
   // "未分类"默认分组
   const uncategorizedGroup: TrafficPoolGroup = {
@@ -209,54 +204,7 @@ export default function TrafficPoolGroupsPage() {
 
   // 创建新分组
   const handleCreateGroup = () => {
-    if (!newGroupName.trim()) {
-      toast({
-        title: "请输入分组名称",
-        description: "分组名称不能为空",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const newGroup: TrafficPoolGroup = {
-      id: `custom-${Date.now()}`,
-      name: newGroupName.trim(),
-      description: newGroupDescription.trim() || "自定义客户分组",
-      userCount: 0,
-      iconType: "users",
-      color: "from-purple-500 to-indigo-500",
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      avgRfmScore: {
-        recency: 0,
-        frequency: 0,
-        monetary: 0,
-        total: 0,
-      },
-    }
-
-    // 获取现有自定义分组
-    const savedCustomGroups = localStorage.getItem("customTrafficPoolGroups")
-    const customGroups: TrafficPoolGroup[] = savedCustomGroups ? JSON.parse(savedCustomGroups) : []
-
-    // 添加新分组到开头（置顶）
-    const updatedCustomGroups = [newGroup, ...customGroups]
-
-    // 保存到localStorage
-    localStorage.setItem("customTrafficPoolGroups", JSON.stringify(updatedCustomGroups))
-
-    // 更新页面显示
-    loadGroups()
-
-    // 重置表单
-    setNewGroupName("")
-    setNewGroupDescription("")
-    setShowCreateDialog(false)
-
-    toast({
-      title: "创建成功",
-      description: `已创建新分组"${newGroup.name}"`,
-    })
+    router.push("/profile/traffic-pool/new")
   }
 
   // 显示删除确认对话框
@@ -333,28 +281,10 @@ export default function TrafficPoolGroupsPage() {
               <p className="text-xs text-gray-500">选择分组进入管理</p>
             </div>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleCreateGroup} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-1" />
             新建分组
           </Button>
-        </div>
-
-        {/* 总览统计 */}
-        <div className="px-4 pb-3 grid grid-cols-3 gap-2">
-          <div className="bg-blue-50 rounded-lg p-2 text-center">
-            <div className="text-xs text-gray-500">总客户数</div>
-            <div className="text-lg font-bold text-blue-600">{groups.reduce((sum, g) => sum + g.userCount, 0)}</div>
-          </div>
-          <div className="bg-green-50 rounded-lg p-2 text-center">
-            <div className="text-xs text-gray-500">已分组</div>
-            <div className="text-lg font-bold text-green-600">
-              {groups.reduce((sum, g) => (g.isUncategorized ? sum : sum + g.userCount), 0)}
-            </div>
-          </div>
-          <div className="bg-orange-50 rounded-lg p-2 text-center">
-            <div className="text-xs text-gray-500">未分类</div>
-            <div className="text-lg font-bold text-orange-600">{uncategorizedGroup.userCount}</div>
-          </div>
         </div>
       </header>
 
@@ -382,7 +312,6 @@ export default function TrafficPoolGroupsPage() {
                   {showDefaultHeader && (
                     <div className="px-1 py-2 mb-2">
                       <div className="text-sm font-medium text-gray-900">默认分组</div>
-                      <div className="text-xs text-gray-500">系统预设的核心客户分组</div>
                     </div>
                   )}
 
@@ -390,7 +319,6 @@ export default function TrafficPoolGroupsPage() {
                   {showCustomHeader && (
                     <div className="px-1 py-2 mb-2">
                       <div className="text-sm font-medium text-gray-900">自定义分组</div>
-                      <div className="text-xs text-gray-500">您创建的客户分组，支持手动添加和删除</div>
                     </div>
                   )}
 
@@ -398,7 +326,6 @@ export default function TrafficPoolGroupsPage() {
                   {showUncategorizedHeader && (
                     <div className="px-1 py-2 mb-2">
                       <div className="text-sm font-medium text-gray-900">系统分组</div>
-                      <div className="text-xs text-gray-500">自动归类未分配的客户，不支持手动添加和删除</div>
                     </div>
                   )}
 
@@ -496,57 +423,6 @@ export default function TrafficPoolGroupsPage() {
           </div>
         )}
       </div>
-
-      {/* 创建分组对话框 */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="w-[90%] max-w-md">
-          <DialogHeader>
-            <DialogTitle>创建新分组</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="group-name">分组名称 *</Label>
-              <Input
-                id="group-name"
-                placeholder="请输入分组名称"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                maxLength={20}
-              />
-              <div className="text-xs text-gray-500 text-right">{newGroupName.length}/20</div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="group-description">分组描述（可选）</Label>
-              <Textarea
-                id="group-description"
-                placeholder="请输入分组描述"
-                value={newGroupDescription}
-                onChange={(e) => setNewGroupDescription(e.target.value)}
-                rows={3}
-                maxLength={100}
-              />
-              <div className="text-xs text-gray-500 text-right">{newGroupDescription.length}/100</div>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="text-xs text-blue-800">
-                <div className="font-medium mb-1">💡 温馨提示</div>
-                <div>• 新创建的分组将置顶显示</div>
-                <div>• 支持手动添加客户到此分组</div>
-                <div>• 支持客户在分组间迁移</div>
-                <div>• 删除分组后，其中客户将自动归入&ldquo;未分类&rdquo;</div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()}>
-              创建分组
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 删除分组确认对话框 */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
